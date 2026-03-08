@@ -1,0 +1,32 @@
+﻿@model HSU.PTWeb.AnhPH.BookStore.Models.Order
+
+@{
+    ViewData["Title"] = "Xác nhận đơn hàng";
+}
+
+<h2>Đơn hàng #@Model.OrderId</h2>
+<p>Ngày: @Model.OrderDate.ToString("g")</p>
+<p>Tổng: @Model.TotalAmount.ToString("N0") VND</p>
+
+<h3>Chi tiết</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Sách</th>
+            <th>Đơn giá</th>
+            <th>Số lượng</th>
+            <th>Thành tiền</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var d in Model.OrderDetails)
+        {
+            <tr>
+                <td>@(d.Product?.ProductName ?? "-")</td>
+                <td>@d.UnitPrice.ToString("N0") VND</td>
+                <td>@d.Quantity</td>
+                <td>@(d.UnitPrice * d.Quantity).ToString("N0") VND</td>
+            </tr>
+        }
+    </tbody>
+</table>

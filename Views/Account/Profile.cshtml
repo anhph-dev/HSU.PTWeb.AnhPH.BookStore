@@ -1,0 +1,72 @@
+﻿@model HSU.PTWeb.AnhPH.BookStore.Models.User
+
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+}
+
+<h2>Thông tin cá nhân</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="Profile" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Email (không thể thay đổi)</label>
+                        <input type="text" value="@Model.Email" class="form-control" readonly disabled />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Họ và tên</label>
+                        <input asp-for="FullName" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu mới (để trống nếu không muốn thay đổi)</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Nhập mật khẩu mới..." />
+                        <div class="form-text">Chỉ nhập nếu bạn muốn thay đổi mật khẩu</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Vai trò</label>
+                        <input type="text" value="@Model.Role" class="form-control" readonly disabled />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ngày tạo tài khoản</label>
+                        <input type="text" value="@Model.CreatedDate.ToString("g")" class="form-control" readonly disabled />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Cập nhật thông tin</button>
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-secondary">Quay lại</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Liên kết nhanh</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-controller="Order" asp-action="Index" class="list-group-item list-group-item-action">
+                    📦 Đơn hàng của tôi
+                </a>
+                <a asp-controller="Cart" asp-action="Index" class="list-group-item list-group-item-action">
+                    🛒 Giỏ hàng
+                </a>
+                <a asp-controller="Product" asp-action="Index" class="list-group-item list-group-item-action">
+                    📚 Sản phẩm
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,38 @@
+﻿@model List<HSU.PTWeb.AnhPH.BookStore.Models.CartItem>
+
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<h2>Thanh toán</h2>
+@if (!Model.Any())
+{
+    <p>Giỏ hàng trống.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sách</th>
+                <th>Đơn giá</th>
+                <th>Số lượng</th>
+                <th>Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.Price.ToString("N0")</td>
+                    <td>@item.Quantity</td>
+                    <td>@(item.Price * item.Quantity).ToString("N0")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <form asp-action="PlaceOrder" method="post">
+        <button type="submit" class="btn btn-success">Xác nhận đặt hàng</button>
+    </form>
+}

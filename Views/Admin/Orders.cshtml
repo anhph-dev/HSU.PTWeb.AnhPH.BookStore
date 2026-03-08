@@ -1,0 +1,112 @@
+﻿@model IEnumerable<HSU.PTWeb.AnhPH.BookStore.Models.Order>
+
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+    var currentPage = ViewData["Page"] != null ? (int)ViewData["Page"] : 1;
+    var totalPages = ViewData["TotalPages"] != null ? (int)ViewData["TotalPages"] : 1;
+    var currentSearch = ViewData["Search"] as string ?? "";
+    var currentStatus = ViewData["Status"] as string ?? "";
+    var fromDate = ViewData["FromDate"] as string ?? "";
+    var toDate = ViewData["ToDate"] as string ?? "";
+}
+
+<h2>Quản lý đơn hàng</h2>
+
+<!-- Form tìm kiếm và lọc -->
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="search" name="search" value="@currentSearch" class="form-control" placeholder="Tìm theo email/tên..." />
+    </div>
+    <div class="col-md-2">
+        <select name="status" class="form-select">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Mới" selected="@(currentStatus == "Mới")">Mới</option>
+            <option value="Đã vận chuyển" selected="@(currentStatus == "Đã vận chuyển")">Đã vận chuyển</option>
+            <option value="Đã thanh toán" selected="@(currentStatus == "Đã thanh toán")">Đã thanh toán</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="fromDate" value="@fromDate" class="form-control" placeholder="Từ ngày" />
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="toDate" value="@toDate" class="form-control" placeholder="Đến ngày" />
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-primary w-100">Lọc</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Mã</th>
+            <th>Người đặt</th>
+            <th>Email</th>
+            <th>Ngày</th>
+            <th>Tổng</th>
+            <th>Trạng thái</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var o in Model)
+        {
+            <tr>
+                <td>@o.OrderId</td>
+                <td>@(o.User?.FullName ?? "-")</td>
+                <td>@(o.User?.Email ?? "-")</td>
+                <td>@o.OrderDate.ToString("g")</td>
+                <td>@o.TotalAmount.ToString("N0") VND</td>
+                <td>
+                    <form asp-action="UpdateOrderStatus" method="post" class="d-inline">
+                        <input type="hidden" name="orderId" value="@o.OrderId" />
+                        <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                            <option value="Mới" selected="@(o.Status == "Mới")">Mới</option>
+                            <option value="Đã vận chuyển" selected="@(o.Status == "Đã vận chuyển")">Đã vận chuyển</option>
+                            <option value="Đã thanh toán" selected="@(o.Status == "Đã thanh toán")">Đã thanh toán</option>
+                        </select>
+                    </form>
+                </td>
+                <td><a asp-action="OrderDetails" asp-route-id="@o.OrderId" class="btn btn-sm btn-primary">Chi tiết</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Orders"
+                   asp-route-page="@(currentPage - 1)"
+                   asp-route-search="@currentSearch"
+                   asp-route-status="@currentStatus"
+                   asp-route-fromDate="@fromDate"
+                   asp-route-toDate="@toDate">«</a>
+            </li>
+
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Orders"
+                       asp-route-page="@i"
+                       asp-route-search="@currentSearch"
+                       asp-route-status="@currentStatus"
+                       asp-route-fromDate="@fromDate"
+                       asp-route-toDate="@toDate">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Orders"
+                   asp-route-page="@(currentPage + 1)"
+                   asp-route-search="@currentSearch"
+                   asp-route-status="@currentStatus"
+                   asp-route-fromDate="@fromDate"
+                   asp-route-toDate="@toDate">»</a>
+            </li>
+        </ul>
+    </nav>
+}

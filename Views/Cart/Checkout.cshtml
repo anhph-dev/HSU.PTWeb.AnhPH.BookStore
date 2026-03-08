@@ -1,0 +1,25 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<h2>Thanh toán</h2>
+<div class="card">
+    <div class="card-body">
+        <form asp-controller="Cart" asp-action="ProcessCheckout" method="post">
+            <div class="mb-3">
+                <label class="form-label">H? tên</label>
+                <input name="FullName" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">??a ch?</label>
+                <input name="Address" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">S? ?i?n tho?i</label>
+                <input name="Phone" class="form-control" />
+            </div>
+            <button class="btn btn-primary">Xác nh?n ??t hàng</button>
+        </form>
+    </div>
+</div>
