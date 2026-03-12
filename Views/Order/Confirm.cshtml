@@ -4,29 +4,65 @@
     ViewData["Title"] = "Xác nhận đơn hàng";
 }
 
-<h2>Đơn hàng #@Model.OrderId</h2>
-<p>Ngày: @Model.OrderDate.ToString("g")</p>
-<p>Tổng: @Model.TotalAmount.ToString("N0") VND</p>
+<div class="text-center mb-4">
+    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+    <h2 class="mt-3">Đặt hàng thành công!</h2>
+    <p class="text-muted">Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn đã được ghi nhận.</p>
+</div>
 
-<h3>Chi tiết</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Sách</th>
-            <th>Đơn giá</th>
-            <th>Số lượng</th>
-            <th>Thành tiền</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var d in Model.OrderDetails)
-        {
-            <tr>
-                <td>@(d.Product?.ProductName ?? "-")</td>
-                <td>@d.UnitPrice.ToString("N0") VND</td>
-                <td>@d.Quantity</td>
-                <td>@(d.UnitPrice * d.Quantity).ToString("N0") VND</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">Thông tin đơn hàng #@Model.OrderId</h4>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <p><strong>Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                <p><strong>Trạng thái:</strong> <span class="badge bg-info">@Model.Status</span></p>
+            </div>
+            <div class="col-md-6 text-end">
+                <p><strong>Tổng tiền:</strong></p>
+                <h3 class="text-danger">@Model.TotalAmount.ToString("N0") VND</h3>
+            </div>
+        </div>
+
+        <h5>Chi tiết đơn hàng</h5>
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th style="width: 130px;">Đơn giá</th>
+                    <th style="width: 100px;">Số lượng</th>
+                    <th style="width: 150px;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.OrderDetails)
+                {
+                    var lineTotal = d.UnitPrice * d.Quantity;
+                    <tr>
+                        <td>@(d.Product?.ProductName ?? "-")</td>
+                        <td>@d.UnitPrice.ToString("N0") VND</td>
+                        <td class="text-center">@d.Quantity</td>
+                        <td class="text-end">@lineTotal.ToString("N0") VND</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                    <td class="text-end"><strong>@Model.TotalAmount.ToString("N0") VND</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3 text-center">
+    <a asp-controller="Order" asp-action="Index" class="btn btn-primary">
+        <i class="bi bi-list"></i> Xem đơn hàng của tôi
+    </a>
+    <a asp-controller="Product" asp-action="Index" class="btn btn-success">
+        <i class="bi bi-shop"></i> Tiếp tục mua sắm
+    </a>
+</div>

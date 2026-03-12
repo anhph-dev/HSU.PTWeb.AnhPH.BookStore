@@ -23,6 +23,21 @@
         public DateTime OrderDate { get; set; }
         public decimal TotalAmount { get; set; }
         public string Status { get; set; }
+        
+        // Shipping information
+        public string RecipientName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Email { get; set; }
+        public string ShippingAddress { get; set; }
+        public string City { get; set; }
+        public string District { get; set; }
+        public string Ward { get; set; }
+        public string Notes { get; set; }
+        
+        // Payment information
+        public string PaymentMethod { get; set; }
+        public string PaymentStatus { get; set; }
+        
         public List<OrderDetailItemViewModel> Items { get; set; } = new List<OrderDetailItemViewModel>();
     }
 }

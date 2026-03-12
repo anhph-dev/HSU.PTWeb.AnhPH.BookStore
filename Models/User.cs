@@ -5,39 +5,41 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HSU.PTWeb.AnhPH.BookStore.Models
 {
-    // Model User đại diện cho người dùng của hệ thống
-    // Chứa thông tin đăng nhập và thông tin cơ bản của người dùng
     public class User
     {
-        // Khóa chính, định danh người dùng
         public int UserId { get; set; }
 
-        // Tương thích: Id cũ trỏ tới UserId
         [NotMapped]
         public int Id { get => UserId; set => UserId = value; }
 
-        // Tên đầy đủ của người dùng
+        [Required(ErrorMessage = "Vui lòng nhập họ tên")]
+        [StringLength(100, ErrorMessage = "Họ tên không được quá 100 ký tự")]
+        [Display(Name = "Họ và tên")]
         public string FullName { get; set; }
 
-        // Email dùng để đăng nhập/liên hệ
-        [Required]
+        [Required(ErrorMessage = "Vui lòng nhập email")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        [StringLength(100)]
+        [Display(Name = "Email")]
         public string Email { get; set; }
 
-        // Tương thích: UserName cũ ánh xạ tới Email
-        [NotMapped]
-        public string UserName { get => Email; set => Email = value; }
+        [StringLength(255)]
+        [Display(Name = "Mật khẩu")]
+        public string PasswordHash { get; set; }
 
-        // Mật khẩu đã được mã hóa (hash)
-        [Required]
-        public string Password { get; set; }
+        [Required(ErrorMessage = "Vai trò không được để trống")]
+        [StringLength(20)]
+        [Display(Name = "Vai trò")]
+        public string Role { get; set; } = "Customer";
 
-        // Vai trò của người dùng, ví dụ: "Admin" hoặc "Customer"
-        public string Role { get; set; }
+        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+        [StringLength(15)]
+        [Display(Name = "Số điện thoại")]
+        public string PhoneNumber { get; set; }
 
-        // Ngày tạo tài khoản
-        public DateTime CreatedDate { get; set; }
+        [Display(Name = "Ngày tạo")]
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        // Navigation property: 1 User có thể có nhiều Order
         public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

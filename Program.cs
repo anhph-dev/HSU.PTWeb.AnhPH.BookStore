@@ -1,30 +1,35 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using HSU.PTWeb.AnhPH.BookStore.Data;
+using HSU.PTWeb.AnhPH.BookStore.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// cấu hình chuỗi kết nối SQL Server (bạn có thể chỉnh trong appsettings.json)
+// Connection string
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=(localdb)\\mssqllocaldb;Database=BookStoreDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+    ?? "Server=(localdb)\\mssqllocaldb;Database=BookStoreDb;Trusted_Connection=True;MultipleActiveResultSets=true;";
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Cấu hình DbContext với SQL Server
+// DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Cấu hình Authentication bằng cookie
+// Register custom services
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+// Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
     });
 
-// Cấu hình Session (dùng để lưu giỏ hàng)
+// Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -35,25 +40,14 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
-// Seed dữ liệu cơ bản (tạo database và admin user)
+// Initialize database and seed data
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-
-    try
-    {
-        var context = services.GetRequiredService<AppDbContext>();
-
-        // áp dụng các migration còn thiếu vào database
-        context.Database.Migrate();
-
-        // seed dữ liệu nếu database trống
-        DbInitializer.Initialize(context);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex.Message);
-    }
+    var context = services.GetRequiredService<AppDbContext>();
+    
+    context.Database.Migrate();
+    DbInitializer.Initialize(context);
 }
 
 // Configure the HTTP request pipeline.
@@ -72,6 +66,12 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Route cho Areas (Admin area)
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+
+// Route mặc định cho public pages
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Product}/{action=Index}/{id?}");

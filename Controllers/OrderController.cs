@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using HSU.PTWeb.AnhPH.BookStore.Data;
 using HSU.PTWeb.AnhPH.BookStore.Helpers;
 using HSU.PTWeb.AnhPH.BookStore.Models;
+using HSU.PTWeb.AnhPH.BookStore.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using HSU.PTWeb.AnhPH.BookStore.ViewModels;
 
 namespace HSU.PTWeb.AnhPH.BookStore.Controllers
 {
@@ -16,7 +16,6 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
         private readonly AppDbContext _context;
         // Khóa session để lưu giỏ hàng (phù hợp với CartController)
         private const string CartSessionKey = "cart";
-        private const int DefaultPageSize = 10;
 
         public OrderController(AppDbContext context)
         {
@@ -26,33 +25,105 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
         // Hiển thị trang Checkout (kiểm tra giỏ hàng)
         public IActionResult Checkout()
         {
-            var cart = SessionHelper.GetObject<List<CartItem>>(HttpContext.Session, CartSessionKey) ?? new List<CartItem>();
-            return View(cart);
+            var cart = SessionHelper.GetObjectFromJson<List<CartItem>>(HttpContext.Session, CartSessionKey) ?? new List<CartItem>();
+            
+            if (!cart.Any())
+            {
+                TempData["ErrorMessage"] = "Giỏ hàng trống!";
+                return RedirectToAction("Index", "Cart");
+            }
+
+            // Pre-fill user info if logged in
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var name = User.FindFirstValue(ClaimTypes.Name);
+            
+            var model = new CheckoutViewModel
+            {
+                Email = email ?? "",
+                RecipientName = name ?? "",
+                PaymentMethod = "COD"
+            };
+
+            ViewBag.Cart = cart;
+            ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+
+            return View(model);
         }
 
         // Xử lý tạo Order và OrderDetails từ giỏ hàng
         [HttpPost]
-        public async Task<IActionResult> PlaceOrder()
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
-            var cart = SessionHelper.GetObject<List<CartItem>>(HttpContext.Session, CartSessionKey) ?? new List<CartItem>();
-            if (!cart.Any()) return RedirectToAction("Index", "Cart");
+            var cart = SessionHelper.GetObjectFromJson<List<CartItem>>(HttpContext.Session, CartSessionKey) ?? new List<CartItem>();
+            
+            if (!cart.Any())
+            {
+                TempData["ErrorMessage"] = "Giỏ hàng trống!";
+                return RedirectToAction("Index", "Cart");
+            }
 
-            // Lấy thông tin user từ claims
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Cart = cart;
+                ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+                return View(model);
+            }
 
+            // Validate stock availability
+            var errors = new List<string>();
+            foreach (var cartItem in cart)
+            {
+                var product = await _context.Products.FindAsync(cartItem.ProductId);
+                if (product == null)
+                {
+                    errors.Add($"Sản phẩm '{cartItem.ProductName}' không tồn tại.");
+                }
+                else if (product.Stock < cartItem.Quantity)
+                {
+                    errors.Add($"Sản phẩm '{cartItem.ProductName}' chỉ còn {product.Stock} trong kho (bạn đặt {cartItem.Quantity}).");
+                }
+            }
+
+            if (errors.Any())
+            {
+                TempData["ErrorMessage"] = string.Join("<br/>", errors);
+                ViewBag.Cart = cart;
+                ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+                return View(model);
+            }
+
+            // Get user
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                TempData["ErrorMessage"] = "Vui lòng đăng nhập để tiếp tục";
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Create order
             var order = new Order
             {
-                UserId = user?.UserId ?? 0,
-                OrderDate = DateTime.UtcNow,
+                UserId = userId,
+                OrderDate = DateTime.Now,
                 TotalAmount = cart.Sum(c => c.Price * c.Quantity),
-                Status = "Mới"
+                Status = "Pending",
+                RecipientName = model.RecipientName,
+                PhoneNumber = model.PhoneNumber,
+                Email = model.Email,
+                ShippingAddress = model.ShippingAddress,
+                City = model.City,
+                District = model.District,
+                Ward = model.Ward,
+                Notes = model.Notes,
+                PaymentMethod = model.PaymentMethod,
+                PaymentStatus = "Pending"
             };
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // Tạo các OrderDetail
+            // Create order details and update stock
             foreach (var c in cart)
             {
                 var detail = new OrderDetail
@@ -63,119 +134,122 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                     UnitPrice = c.Price
                 };
                 _context.OrderDetails.Add(detail);
+
+                // Deduct stock
+                var product = await _context.Products.FindAsync(c.ProductId);
+                if (product != null)
+                {
+                    product.Stock -= c.Quantity;
+                    product.SoldCount += c.Quantity;
+                }
             }
 
             await _context.SaveChangesAsync();
 
-            // Clear session cart
-            SessionHelper.SetObject(HttpContext.Session, CartSessionKey, new List<CartItem>());
+            // Clear cart
+            HttpContext.Session.Remove(CartSessionKey);
 
+            TempData["SuccessMessage"] = "Đặt hàng thành công! Cảm ơn bạn đã mua hàng.";
             return RedirectToAction("Confirm", new { id = order.OrderId });
         }
 
         // Trang xác nhận đơn hàng
         public async Task<IActionResult> Confirm(int id)
         {
-            // Load order cùng với chi tiết và thông tin product để hiển thị đầy đủ
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
             var order = await _context.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
-                .FirstOrDefaultAsync(o => o.OrderId == id);
+                .FirstOrDefaultAsync(o => o.OrderId == id && o.UserId == userId);
+
             if (order == null) return NotFound();
+
             return View(order);
         }
 
         // Hiển thị danh sách đơn hàng của user hiện tại với phân trang và lọc
-        public async Task<IActionResult> Index(string status, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = DefaultPageSize)
+        public async Task<IActionResult> Index(string status, DateTime? fromDate, DateTime? toDate, int page = 1)
         {
-            // Lấy userId từ claim NameIdentifier
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
             if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
 
-            // Khởi tạo truy vấn lọc theo user
-            var query = _context.Orders
-                .Where(o => o.UserId == userId)
-                .AsQueryable();
+            var query = _context.Orders.Where(o => o.UserId == userId);
 
-            // Lọc theo trạng thái nếu có
             if (!string.IsNullOrEmpty(status))
             {
                 query = query.Where(o => o.Status == status);
                 ViewData["Status"] = status;
             }
 
-            // Lọc theo khoảng ngày nếu có
             if (fromDate.HasValue)
             {
                 query = query.Where(o => o.OrderDate >= fromDate.Value.Date);
                 ViewData["FromDate"] = fromDate.Value.ToString("yyyy-MM-dd");
             }
+
             if (toDate.HasValue)
             {
-                // include toàn bộ ngày toDate
                 var end = toDate.Value.Date.AddDays(1);
                 query = query.Where(o => o.OrderDate < end);
                 ViewData["ToDate"] = toDate.Value.ToString("yyyy-MM-dd");
             }
 
-            // Tổng số mục để phân trang
+            var pageSize = 10;
             var totalItems = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            // Lấy trang hiện tại
-            page = Math.Max(1, page);
-            if (page > totalPages) page = totalPages == 0 ? 1 : totalPages;
+            page = Math.Max(1, Math.Min(page, totalPages == 0 ? 1 : totalPages));
 
-            // Truy vấn dữ liệu với phân trang, sắp theo ngày giảm dần
             var orders = await query
                 .OrderByDescending(o => o.OrderDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .Select(o => new OrderListItemViewModel
+                {
+                    OrderId = o.OrderId,
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    Status = o.Status
+                })
                 .ToListAsync();
-
-            // Map sang viewmodel
-            var vm = orders.Select(o => new OrderListItemViewModel
-            {
-                OrderId = o.OrderId,
-                OrderDate = o.OrderDate,
-                TotalAmount = o.TotalAmount,
-                Status = o.Status
-            }).ToList();
 
             ViewData["Page"] = page;
             ViewData["TotalPages"] = totalPages;
-            ViewData["PageSize"] = pageSize;
 
-            return View(vm);
+            return View(orders);
         }
 
         // Hiển thị chi tiết đơn hàng cho user hiện tại
         public async Task<IActionResult> Details(int id)
         {
-            // Lấy userId từ claim
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
             if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
 
-            // Lấy order kèm chi tiết và product
             var order = await _context.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
-                .FirstOrDefaultAsync(o => o.OrderId == id);
+                .FirstOrDefaultAsync(o => o.OrderId == id && o.UserId == userId);
 
             if (order == null) return NotFound();
 
-            // Kiểm tra quyền: order phải thuộc user hiện tại
-            if (order.UserId != userId) return Unauthorized();
-
-            // Map sang viewmodel
             var vm = new OrderDetailsViewModel
             {
                 OrderId = order.OrderId,
                 OrderDate = order.OrderDate,
                 TotalAmount = order.TotalAmount,
                 Status = order.Status,
+                RecipientName = order.RecipientName,
+                PhoneNumber = order.PhoneNumber,
+                Email = order.Email,
+                ShippingAddress = order.ShippingAddress,
+                City = order.City,
+                District = order.District,
+                Ward = order.Ward,
+                Notes = order.Notes,
+                PaymentMethod = order.PaymentMethod,
+                PaymentStatus = order.PaymentStatus,
                 Items = order.OrderDetails.Select(d => new OrderDetailItemViewModel
                 {
                     ProductName = d.Product?.ProductName ?? "-",

@@ -15,5 +15,11 @@ namespace HSU.PTWeb.AnhPH.BookStore.Helpers
             var data = session.GetString(key);
             return data == null ? default(T) : JsonSerializer.Deserialize<T>(data);
         }
+
+        // Alias for compatibility
+        public static T GetObjectFromJson<T>(ISession session, string key)
+        {
+            return GetObject<T>(session, key);
+        }
     }
 }

@@ -7,32 +7,55 @@
 <h2>Thanh toán</h2>
 @if (!Model.Any())
 {
-    <p>Giỏ hàng trống.</p>
+    <div class="alert alert-info">Giỏ hàng trống.</div>
+    <a asp-controller="Product" asp-action="Index" class="btn btn-primary">Tiếp tục mua sắm</a>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Sách</th>
-                <th>Đơn giá</th>
-                <th>Số lượng</th>
-                <th>Thành tiền</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Title</td>
-                    <td>@item.Price.ToString("N0")</td>
-                    <td>@item.Quantity</td>
-                    <td>@(item.Price * item.Quantity).ToString("N0")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-    <form asp-action="PlaceOrder" method="post">
-        <button type="submit" class="btn btn-success">Xác nhận đặt hàng</button>
-    </form>
+    <div class="card">
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Sách</th>
+                        <th>Đơn giá</th>
+                        <th>Số lượng</th>
+                        <th>Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var lineTotal = item.Price * item.Quantity;
+                        <tr>
+                            <td>
+                                <img src="~/images/@(item.ImageUrl ?? "products/placeholder.svg")" style="width:50px;height:50px;object-fit:cover;" class="me-2" onerror="this.src='/images/products/placeholder.svg'" />
+                                @item.ProductName
+                            </td>
+                            <td>@item.Price.ToString("N0") VND</td>
+                            <td>@item.Quantity</td>
+                            <td>@lineTotal.ToString("N0") VND</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                        <td><strong>@Model.Sum(x => x.Price * x.Quantity).ToString("N0") VND</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <form asp-action="PlaceOrder" method="post" class="d-inline">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Xác nhận đặt hàng
+            </button>
+        </form>
+        <a asp-controller="Cart" asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại giỏ hàng
+        </a>
+    </div>
 }

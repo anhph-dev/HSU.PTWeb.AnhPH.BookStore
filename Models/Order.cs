@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HSU.PTWeb.AnhPH.BookStore.Models
@@ -11,32 +12,78 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         // Khóa chính
         public int OrderId { get; set; }
 
-        // Tương thích: Id cũ
-        [NotMapped]
-        public int Id { get => OrderId; set => OrderId = value; }
-
         // Khóa ngoại tới User
         public int UserId { get; set; }
 
         // Navigation tới User
         public User User { get; set; }
 
-        // Tên người đặt (tương thích với mã cũ)
-        [NotMapped]
-        public string UserName { get => User?.UserName; set { /* ignored */ } }
-
         // Ngày đặt hàng
-        public DateTime OrderDate { get; set; }
+        [Display(Name = "Ngày đặt hàng")]
+        public DateTime OrderDate { get; set; } = DateTime.Now;
 
         // Tổng tiền đơn hàng
+        [Display(Name = "Tổng tiền")]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
 
-        // Tương thích: Total cũ
-        [NotMapped]
-        public decimal Total { get => TotalAmount; set => TotalAmount = value; }
-
         // Trạng thái đơn hàng (ví dụ: Pending, Completed, Cancelled)
-        public string Status { get; set; }
+        [Required]
+        [StringLength(50)]
+        [Display(Name = "Trạng thái")]
+        public string Status { get; set; } = "Pending";
+
+        // Shipping Information
+        [Required(ErrorMessage = "Vui lòng nhập họ tên người nhận")]
+        [StringLength(100)]
+        [Display(Name = "Người nhận")]
+        public string RecipientName { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
+        [Phone]
+        [StringLength(15)]
+        [Display(Name = "Số điện thoại")]
+        public string PhoneNumber { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập email")]
+        [EmailAddress]
+        [StringLength(100)]
+        [Display(Name = "Email")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập địa chỉ giao hàng")]
+        [StringLength(500)]
+        [Display(Name = "Địa chỉ giao hàng")]
+        public string ShippingAddress { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Tỉnh/Thành phố")]
+        public string City { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Quận/Huyện")]
+        public string District { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Phường/Xã")]
+        public string Ward { get; set; }
+
+        [StringLength(500)]
+        [Display(Name = "Ghi chú")]
+        public string Notes { get; set; }
+
+        // Payment Information
+        [Required]
+        [StringLength(50)]
+        [Display(Name = "Phương thức thanh toán")]
+        public string PaymentMethod { get; set; } = "COD"; // COD, BankTransfer, VNPay
+
+        [StringLength(50)]
+        [Display(Name = "Trạng thái thanh toán")]
+        public string PaymentStatus { get; set; } = "Pending"; // Pending, Paid, Failed
+
+        [Display(Name = "Ngày thanh toán")]
+        public DateTime? PaidAt { get; set; }
 
         // Navigation: 1 Order có nhiều OrderDetail
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

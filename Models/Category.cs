@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HSU.PTWeb.AnhPH.BookStore.Models
 {
@@ -11,19 +10,15 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         // Khóa chính
         public int CategoryId { get; set; }
 
-        // Tương thích với mã cũ
-        [NotMapped]
-        public int Id { get => CategoryId; set => CategoryId = value; }
-
         // Tên danh mục
-        [Required]
+        [Required(ErrorMessage = "Vui lòng nhập tên danh mục")]
+        [StringLength(100)]
+        [Display(Name = "Tên danh mục")]
         public string CategoryName { get; set; }
 
-        // Tương thích với mã cũ
-        [NotMapped]
-        public string Name { get => CategoryName; set => CategoryName = value; }
-
         // Mô tả danh mục
+        [StringLength(500)]
+        [Display(Name = "Mô tả")]
         public string Description { get; set; }
 
         // Navigation: 1 Category có nhiều Product
