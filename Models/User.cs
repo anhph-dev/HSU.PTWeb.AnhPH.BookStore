@@ -37,6 +37,22 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         [Display(Name = "Số điện thoại")]
         public string PhoneNumber { get; set; }
 
+        // Thông tin giao hàng mặc định
+        [StringLength(500)]
+        [Display(Name = "Địa chỉ")]
+        public string Address { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Tỉnh/Thành phố")]
+        public string City { get; set; }
+
+        // Trạng thái tài khoản
+        [Display(Name = "Khoá tài khoản")]
+        public bool IsLocked { get; set; } = false;
+
+        [Display(Name = "Ngày khoá")]
+        public DateTime? LockedUntil { get; set; }
+
         [Display(Name = "Ngày tạo")]
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 

@@ -22,29 +22,34 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             _context = context;
         }
 
-        // Hiển thị trang Checkout (kiểm tra giỏ hàng)
+        // Hiển thị trang Checkout - tự động điền thông tin từ profile user
         public IActionResult Checkout()
         {
             var cart = SessionHelper.GetObjectFromJson<List<CartItem>>(HttpContext.Session, CartSessionKey) ?? new List<CartItem>();
-            
+
             if (!cart.Any())
             {
                 TempData["ErrorMessage"] = "Giỏ hàng trống!";
                 return RedirectToAction("Index", "Cart");
             }
 
-            // Pre-fill user info if logged in
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var name = User.FindFirstValue(ClaimTypes.Name);
-            
+            // Lấy thông tin user để điền sẵn vào form
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            User dbUser = null;
+            if (int.TryParse(userIdClaim, out var userId))
+                dbUser = _context.Users.Find(userId);
+
             var model = new CheckoutViewModel
             {
-                Email = email ?? "",
-                RecipientName = name ?? "",
-                PaymentMethod = "COD"
+                Email           = dbUser?.Email ?? User.FindFirstValue(ClaimTypes.Email) ?? "",
+                RecipientName   = dbUser?.FullName ?? User.FindFirstValue(ClaimTypes.Name) ?? "",
+                PhoneNumber     = dbUser?.PhoneNumber ?? "",
+                ShippingAddress = dbUser?.Address ?? "",
+                City            = dbUser?.City ?? "",
+                PaymentMethod   = "COD"
             };
 
-            ViewBag.Cart = cart;
+            ViewBag.Cart  = cart;
             ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
 
             return View(model);

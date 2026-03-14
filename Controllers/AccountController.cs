@@ -35,20 +35,23 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            // Kiểm tra email (user name) đã tồn tại
+            // Kiểm tra email đã tồn tại chưa
             if (await _context.Users.AnyAsync(u => u.Email == model.UserName))
             {
-                ModelState.AddModelError("", "Email/tài khoản đã tồn tại");
+                ModelState.AddModelError("", "Email đã được sử dụng, vui lòng chọn email khác");
                 return View(model);
             }
 
             var user = new User
             {
-                Email = model.UserName,
+                Email        = model.UserName,
                 PasswordHash = _passwordHasher.HashPassword(model.Password),
-                FullName = model.FullName,
-                Role = "Customer",
-                CreatedDate = DateTime.Now
+                FullName     = model.FullName,
+                PhoneNumber  = model.PhoneNumber,
+                Address      = model.Address,
+                City         = model.City,
+                Role         = "Customer",     // Tự động gán role Customer
+                CreatedDate  = DateTime.Now
             };
 
             _context.Users.Add(user);
@@ -73,19 +76,39 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.UserName);
-            
+
             if (user == null || !_passwordHasher.VerifyPassword(model.Password, user.PasswordHash))
             {
                 ModelState.AddModelError("", "Email hoặc mật khẩu không đúng");
                 return View(model);
             }
 
+            // Kiểm tra tài khoản có bị khoá không
+            if (user.IsLocked)
+            {
+                // Nếu khoá tạm thời và đã hết hạn thì tự mở khoá
+                if (user.LockedUntil.HasValue && user.LockedUntil.Value <= DateTime.Now)
+                {
+                    user.IsLocked    = false;
+                    user.LockedUntil = null;
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    var msg = user.LockedUntil.HasValue
+                        ? $"Tài khoản bị khoá đến {user.LockedUntil.Value:dd/MM/yyyy HH:mm}"
+                        : "Tài khoản đã bị khoá. Vui lòng liên hệ quản trị viên.";
+                    ModelState.AddModelError("", msg);
+                    return View(model);
+                }
+            }
+
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.FullName ?? user.Email),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role ?? "Customer"),
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString())
+                new Claim(ClaimTypes.Name,               user.FullName ?? user.Email),
+                new Claim(ClaimTypes.Email,              user.Email),
+                new Claim(ClaimTypes.Role,               user.Role ?? "Customer"),
+                new Claim(ClaimTypes.NameIdentifier,     user.UserId.ToString())
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -93,18 +116,22 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = model.RememberMe,
-                ExpiresUtc = model.RememberMe ? DateTimeOffset.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(2)
+                ExpiresUtc   = model.RememberMe
+                    ? DateTimeOffset.UtcNow.AddDays(30)
+                    : DateTimeOffset.UtcNow.AddHours(2)
             };
 
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity), authProperties);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
 
             TempData["SuccessMessage"] = $"Chào mừng {user.FullName}!";
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 
-            // Redirect admin to dashboard
+            // Admin → Dashboard, Customer → trang chủ
             if (user.Role == "Admin")
                 return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
 
@@ -137,10 +164,12 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
 
             var vm = new ProfileViewModel
             {
-                FullName = user.FullName,
+                FullName    = user.FullName,
                 PhoneNumber = user.PhoneNumber,
-                Email = user.Email,
-                Role = user.Role,
+                Address     = user.Address,
+                City        = user.City,
+                Email       = user.Email,
+                Role        = user.Role,
                 CreatedDate = user.CreatedDate
             };
 
@@ -161,15 +190,19 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
 
             if (!ModelState.IsValid)
             {
-                model.Email = user.Email;
-                model.Role = user.Role;
+                model.Email       = user.Email;
+                model.Role        = user.Role;
                 model.CreatedDate = user.CreatedDate;
                 return View(model);
             }
 
-            user.FullName = model.FullName;
+            // Cập nhật thông tin cá nhân
+            user.FullName    = model.FullName;
             user.PhoneNumber = model.PhoneNumber;
+            user.Address     = model.Address;
+            user.City        = model.City;
 
+            // Đổi mật khẩu nếu có nhập
             if (!string.IsNullOrWhiteSpace(model.NewPassword))
                 user.PasswordHash = _passwordHasher.HashPassword(model.NewPassword);
 

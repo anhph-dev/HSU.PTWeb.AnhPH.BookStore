@@ -14,6 +14,14 @@ namespace HSU.PTWeb.AnhPH.BookStore.ViewModels
         [Display(Name = "Số điện thoại")]
         public string PhoneNumber { get; set; }
 
+        [StringLength(500)]
+        [Display(Name = "Địa chỉ giao hàng")]
+        public string Address { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Tỉnh/Thành phố")]
+        public string City { get; set; }
+
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu mới tối thiểu 6 ký tự")]
         [DataType(DataType.Password)]
         [Display(Name = "Mật khẩu mới")]

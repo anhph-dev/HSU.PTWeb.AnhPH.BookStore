@@ -1,80 +1,123 @@
 ﻿@model List<HSU.PTWeb.AnhPH.BookStore.ViewModels.OrderListItemViewModel>
-
 @{
     ViewData["Title"] = "Đơn hàng của tôi";
-    var currentPage = ViewData["Page"] != null ? (int)ViewData["Page"] : 1;
-    var totalPages = ViewData["TotalPages"] != null ? (int)ViewData["TotalPages"] : 1;
+    var currentPage   = (int)(ViewData["Page"] ?? 1);
+    var totalPages    = (int)(ViewData["TotalPages"] ?? 1);
     var currentStatus = ViewData["Status"] as string ?? "";
-    var fromDate = ViewData["FromDate"] as string ?? "";
-    var toDate = ViewData["ToDate"] as string ?? "";
+    var fromDate      = ViewData["FromDate"] as string ?? "";
+    var toDate        = ViewData["ToDate"] as string ?? "";
+    var statuses      = new[] { "Pending", "Processing", "Shipped", "Completed", "Cancelled" };
 }
 
-<h2>Đơn hàng của tôi</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-bag-check"></i> Đơn hàng của tôi</h4>
+    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-shop"></i> Tiếp tục mua sắm
+    </a>
+</div>
 
-<!-- Form lọc -->
-<form method="get" class="row g-2 mb-3">
-    <div class="col-md-3">
-        <select name="status" class="form-select">
-            <option value="">Tất cả trạng thái</option>
-            <option value="Mới" selected="@(currentStatus == "Mới")">Mới</option>
-            <option value="Đã vận chuyển" selected="@(currentStatus == "Đã vận chuyển")">Đã vận chuyển</option>
-            <option value="Đã thanh toán" selected="@(currentStatus == "Đã thanh toán")">Đã thanh toán</option>
-        </select>
+{{-- Bộ lọc --}}
+<div class="card shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    @foreach (var s in statuses)
+                    {
+                        <option value="@s" selected="@(currentStatus == s ? "selected" : null)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="fromDate" value="@fromDate"
+                       class="form-control form-control-sm" placeholder="Từ ngày" />
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="toDate" value="@toDate"
+                       class="form-control form-control-sm" placeholder="Đến ngày" />
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-filter"></i> Lọc
+                </button>
+            </div>
+        </form>
     </div>
-    <div class="col-md-3">
-        <input type="date" name="fromDate" value="@fromDate" class="form-control" placeholder="Từ ngày" />
-    </div>
-    <div class="col-md-3">
-        <input type="date" name="toDate" value="@toDate" class="form-control" placeholder="Đến ngày" />
-    </div>
-    <div class="col-md-3">
-        <button class="btn btn-primary w-100">Lọc</button>
-    </div>
-</form>
+</div>
 
-@if (Model == null || !Model.Any())
+@if (!Model.Any())
 {
-    <div class="alert alert-info">Bạn chưa có đơn hàng nào.</div>
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+            <h5 class="text-muted">Bạn chưa có đơn hàng nào</h5>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-primary mt-2">
+                <i class="bi bi-shop"></i> Mua sắm ngay
+            </a>
+        </div>
+    </div>
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Mã đơn</th>
-                <th>Ngày</th>
-                <th>Tổng</th>
-                <th>Trạng thái</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var o in Model)
-            {
-                <tr>
-                    <td>@o.OrderId</td>
-                    <td>@o.OrderDate.ToString("g")</td>
-                    <td>@o.TotalAmount.ToString("N0") VND</td>
-                    <td><span class="badge bg-info">@o.Status</span></td>
-                    <td><a asp-action="Details" asp-route-id="@o.OrderId" class="btn btn-sm btn-primary">Xem chi tiết</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#Đơn</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Thanh toán</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        var badge = o.Status switch
+                        {
+                            "Completed"  => "bg-success",
+                            "Shipped"    => "bg-info",
+                            "Processing" => "bg-warning text-dark",
+                            "Cancelled"  => "bg-secondary",
+                            _            => "bg-light text-dark border"
+                        };
+                        <tr>
+                            <td><strong>#@o.OrderId</strong></td>
+                            <td class="text-muted small">@o.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="fw-bold text-danger">@o.TotalAmount.ToString("N0") đ</td>
+                            <td>
+                                <span class="badge @(o.Status == "Completed" || o.Status == "Shipped" ? "bg-success" : "bg-warning text-dark")">
+                                    @(o.Status == "Completed" || o.Status == "Shipped" ? "Đã thanh toán" : "Chờ thanh toán")
+                                </span>
+                            </td>
+                            <td><span class="badge @badge">@o.Status</span></td>
+                            <td class="text-center">
+                                <a asp-action="Details" asp-route-id="@o.OrderId"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Xem chi tiết
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    <!-- Pagination -->
     @if (totalPages > 1)
     {
-        <nav aria-label="Page navigation">
+        <nav class="mt-3">
             <ul class="pagination justify-content-center">
-                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
                     <a class="page-link" asp-action="Index"
                        asp-route-page="@(currentPage - 1)"
                        asp-route-status="@currentStatus"
                        asp-route-fromDate="@fromDate"
-                       asp-route-toDate="@toDate">«</a>
+                       asp-route-toDate="@toDate">←</a>
                 </li>
-
                 @for (int i = 1; i <= totalPages; i++)
                 {
                     <li class="page-item @(i == currentPage ? "active" : "")">
@@ -85,13 +128,12 @@ else
                            asp-route-toDate="@toDate">@i</a>
                     </li>
                 }
-
-                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
                     <a class="page-link" asp-action="Index"
                        asp-route-page="@(currentPage + 1)"
                        asp-route-status="@currentStatus"
                        asp-route-fromDate="@fromDate"
-                       asp-route-toDate="@toDate">»</a>
+                       asp-route-toDate="@toDate">→</a>
                 </li>
             </ul>
         </nav>

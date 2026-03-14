@@ -14,11 +14,11 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             // ===== USERS =====
             var users = new List<User>
             {
-                new User { Email = "admin@bookstore.com",    FullName = "Quản trị viên", PasswordHash = hasher.HashPassword("Admin@123"),    Role = "Admin",    PhoneNumber = "0901234567", CreatedDate = DateTime.Now },
-                new User { Email = "customer1@gmail.com",   FullName = "Nguyễn Văn A",  PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0912345678", CreatedDate = DateTime.Now.AddDays(-30) },
-                new User { Email = "customer2@gmail.com",   FullName = "Trần Thị B",    PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0923456789", CreatedDate = DateTime.Now.AddDays(-25) },
-                new User { Email = "customer3@gmail.com",   FullName = "Lê Văn C",      PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0934567890", CreatedDate = DateTime.Now.AddDays(-20) },
-                new User { Email = "customer4@gmail.com",   FullName = "Phạm Thị D",    PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0945678901", CreatedDate = DateTime.Now.AddDays(-15) },
+                new User { Email = "admin@bookstore.com",    FullName = "Quản trị viên", PasswordHash = hasher.HashPassword("Admin@123"),    Role = "Admin",    PhoneNumber = "0901234567", Address = "123 Nguyễn Huệ",    City = "TP. Hồ Chí Minh", CreatedDate = DateTime.Now },
+                new User { Email = "customer1@gmail.com",   FullName = "Nguyễn Văn A",  PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0912345678", Address = "45 Lê Lợi",         City = "TP. Hồ Chí Minh", CreatedDate = DateTime.Now.AddDays(-30) },
+                new User { Email = "customer2@gmail.com",   FullName = "Trần Thị B",    PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0923456789", Address = "78 Trần Hưng Đạo",  City = "Hà Nội",           CreatedDate = DateTime.Now.AddDays(-25) },
+                new User { Email = "customer3@gmail.com",   FullName = "Lê Văn C",      PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0934567890", Address = "12 Pasteur",        City = "Đà Nẵng",          CreatedDate = DateTime.Now.AddDays(-20) },
+                new User { Email = "customer4@gmail.com",   FullName = "Phạm Thị D",    PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0945678901", Address = "56 Điện Biên Phủ",  City = "Cần Thơ",          CreatedDate = DateTime.Now.AddDays(-15) },
             };
             context.Users.AddRange(users);
 

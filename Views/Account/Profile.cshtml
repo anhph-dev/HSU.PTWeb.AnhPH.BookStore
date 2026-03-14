@@ -1,74 +1,87 @@
 ﻿@model HSU.PTWeb.AnhPH.BookStore.ViewModels.ProfileViewModel
-
-@{
-    ViewData["Title"] = "Thông tin cá nhân";
-}
+@{ ViewData["Title"] = "Thông tin cá nhân"; }
 
 <div class="container">
     <div class="row mt-4">
-        <div class="col-md-8">
+        <div class="col-lg-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="bi bi-person-circle"></i> Thông tin cá nhân</h5>
                 </div>
                 <div class="card-body p-4">
-
                     @if (!ViewData.ModelState.IsValid)
                     {
                         <div class="alert alert-danger">
                             <ul class="mb-0">
-                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                @foreach (var e in ViewData.ModelState.Values.SelectMany(v => v.Errors))
                                 {
-                                    <li>@error.ErrorMessage</li>
+                                    <li>@e.ErrorMessage</li>
                                 }
                             </ul>
                         </div>
                     }
 
                     <form asp-action="Profile" method="post">
+
+                        <h6 class="text-muted mb-3 border-bottom pb-2">Thông tin cơ bản</h6>
+
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Email</label>
-                            <input type="text" value="@Model.Email" class="form-control" readonly disabled />
+                            <label class="form-label fw-bold">Email (không thể thay đổi)</label>
+                            <input type="text" value="@Model.Email" class="form-control bg-light" readonly />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-7 mb-3">
+                                <label asp-for="FullName" class="form-label fw-bold"></label>
+                                <input asp-for="FullName" class="form-control" />
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-5 mb-3">
+                                <label asp-for="PhoneNumber" class="form-label fw-bold"></label>
+                                <input asp-for="PhoneNumber" class="form-control" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <h6 class="text-muted mb-3 border-bottom pb-2 mt-2">Địa chỉ giao hàng mặc định</h6>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label fw-bold"></label>
+                            <input asp-for="Address" class="form-control" placeholder="Số nhà, tên đường..." />
+                            <span asp-validation-for="Address" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="FullName" class="form-label fw-bold"></label>
-                            <input asp-for="FullName" class="form-control" />
-                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                            <label asp-for="City" class="form-label fw-bold"></label>
+                            <select asp-for="City" class="form-select">
+                                <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                <option>TP. Hồ Chí Minh</option>
+                                <option>Hà Nội</option>
+                                <option>Đà Nẵng</option>
+                                <option>Cần Thơ</option>
+                                <option>Bình Dương</option>
+                                <option>Đồng Nai</option>
+                                <option>Hải Phòng</option>
+                                <option>Huế</option>
+                            </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="PhoneNumber" class="form-label fw-bold"></label>
-                            <input asp-for="PhoneNumber" class="form-control" />
-                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        <h6 class="text-muted mb-3 border-bottom pb-2 mt-2">Đổi mật khẩu <small class="text-muted fw-normal">(để trống nếu không muốn đổi)</small></h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="NewPassword" class="form-label fw-bold"></label>
+                                <input asp-for="NewPassword" type="password" class="form-control" placeholder="••••••••" />
+                                <span asp-validation-for="NewPassword" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label fw-bold"></label>
+                                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••••" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
                         </div>
 
-                        <hr />
-                        <h6 class="text-muted mb-3">Đổi mật khẩu (để trống nếu không muốn thay đổi)</h6>
-
-                        <div class="mb-3">
-                            <label asp-for="NewPassword" class="form-label fw-bold"></label>
-                            <input asp-for="NewPassword" type="password" class="form-control" placeholder="••••••••" />
-                            <span asp-validation-for="NewPassword" class="text-danger small"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="ConfirmPassword" class="form-label fw-bold"></label>
-                            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••••" />
-                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Vai trò</label>
-                            <input type="text" value="@Model.Role" class="form-control" readonly disabled />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Ngày tạo tài khoản</label>
-                            <input type="text" value="@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")" class="form-control" readonly disabled />
-                        </div>
-
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 mt-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> Lưu thay đổi
                             </button>
@@ -81,20 +94,30 @@
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h6 class="mb-0">Liên kết nhanh</h6>
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header"><h6 class="mb-0">Thông tin tài khoản</h6></div>
+                <div class="card-body">
+                    <p class="mb-1"><strong>Vai trò:</strong>
+                        <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-success")">@Model.Role</span>
+                    </p>
+                    <p class="mb-0 text-muted small">
+                        <i class="bi bi-calendar3"></i> Thành viên từ @Model.CreatedDate.ToString("dd/MM/yyyy")
+                    </p>
                 </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header"><h6 class="mb-0">Liên kết nhanh</h6></div>
                 <div class="list-group list-group-flush">
                     <a asp-controller="Order" asp-action="Index" class="list-group-item list-group-item-action">
-                        <i class="bi bi-box-seam"></i> Đơn hàng của tôi
+                        <i class="bi bi-bag-check text-primary"></i> Đơn hàng của tôi
                     </a>
                     <a asp-controller="Cart" asp-action="Index" class="list-group-item list-group-item-action">
-                        <i class="bi bi-cart3"></i> Giỏ hàng
+                        <i class="bi bi-cart3 text-warning"></i> Giỏ hàng
                     </a>
                     <a asp-controller="Product" asp-action="Index" class="list-group-item list-group-item-action">
-                        <i class="bi bi-books"></i> Cửa hàng sách
+                        <i class="bi bi-books text-success"></i> Tiếp tục mua sắm
                     </a>
                 </div>
             </div>
@@ -103,5 +126,5 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

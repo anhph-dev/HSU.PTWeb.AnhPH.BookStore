@@ -1,0 +1,211 @@
+﻿@using HSU.PTWeb.AnhPH.BookStore.Models
+@model User
+@{ ViewData["Title"] = $"Chi tiết: {Model.FullName}"; }
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Danh sách
+    </a>
+    <h4 class="mb-0">
+        <i class="bi bi-person-badge"></i> @Model.FullName
+        @if (Model.IsLocked)
+        {
+            <span class="badge bg-danger ms-2"><i class="bi bi-lock-fill"></i> Bị khoá</span>
+        }
+    </h4>
+</div>
+
+<div class="row">
+    {{-- Thông tin người dùng --}}
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="bi bi-person-circle"></i> Thông tin cá nhân</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted" style="width:40%">ID</td>
+                        <td><strong>#@Model.UserId</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Họ tên</td>
+                        <td><strong>@Model.FullName</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Email</td>
+                        <td>@Model.Email</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Điện thoại</td>
+                        <td>@(Model.PhoneNumber ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Địa chỉ</td>
+                        <td>@(Model.Address ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Thành phố</td>
+                        <td>@(Model.City ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Role</td>
+                        <td>
+                            <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-primary")">
+                                @Model.Role
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Ngày tạo</td>
+                        <td>@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        {{-- Quản lý khoá tài khoản --}}
+        <div class="card shadow-sm mt-3">
+            <div class="card-header"><h6 class="mb-0">Quản lý tài khoản</h6></div>
+            <div class="card-body">
+                @if (Model.IsLocked)
+                {
+                    <div class="alert alert-danger py-2 mb-3">
+                        <i class="bi bi-lock-fill"></i>
+                        @if (Model.LockedUntil.HasValue)
+                        {
+                            <text>Khoá đến: <strong>@Model.LockedUntil.Value.ToString("dd/MM/yyyy HH:mm")</strong></text>
+                        }
+                        else
+                        {
+                            <text>Khoá <strong>vĩnh viễn</strong></text>
+                        }
+                    </div>
+                    <form asp-action="Unlock" asp-route-id="@Model.UserId" method="post">
+                        <button class="btn btn-success w-100">
+                            <i class="bi bi-unlock"></i> Mở khoá tài khoản
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Khoá tạm thời</label>
+                        <div class="d-flex gap-2">
+                            @foreach (var days in new[] { 1, 3, 7, 30 })
+                            {
+                                <form asp-action="Lock" asp-route-id="@Model.UserId" method="post"
+                                      onsubmit="return confirm('Khoá @days ngày?')">
+                                    <input type="hidden" name="days" value="@days" />
+                                    <button class="btn btn-sm btn-warning">@days ngày</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                    <form asp-action="Lock" asp-route-id="@Model.UserId" method="post"
+                          onsubmit="return confirm('Khoá vĩnh viễn tài khoản này?')">
+                        <input type="hidden" name="days" value="0" />
+                        <button class="btn btn-danger w-100">
+                            <i class="bi bi-lock-fill"></i> Khoá vĩnh viễn
+                        </button>
+                    </form>
+                }
+
+                {{-- Đổi Role --}}
+                @if (Model.Role != "Admin")
+                {
+                    <hr />
+                    <form asp-action="ChangeRole" asp-route-id="@Model.UserId" method="post"
+                          onsubmit="return confirm('Đổi role thành Admin?')">
+                        <input type="hidden" name="newRole" value="Admin" />
+                        <button class="btn btn-outline-danger w-100 btn-sm">
+                            <i class="bi bi-shield-check"></i> Nâng lên Admin
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <hr />
+                    <form asp-action="ChangeRole" asp-route-id="@Model.UserId" method="post"
+                          onsubmit="return confirm('Hạ xuống Customer?')">
+                        <input type="hidden" name="newRole" value="Customer" />
+                        <button class="btn btn-outline-secondary w-100 btn-sm">
+                            <i class="bi bi-person"></i> Hạ xuống Customer
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    {{-- Lịch sử đơn hàng --}}
+    <div class="col-lg-7 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-bag-check"></i>
+                    Lịch sử đơn hàng (@Model.Orders.Count đơn)
+                </h6>
+            </div>
+            @if (Model.Orders.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#Đơn</th>
+                                <th>Ngày đặt</th>
+                                <th>Số sách</th>
+                                <th class="text-end">Tổng tiền</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var o in Model.Orders.OrderByDescending(o => o.OrderDate))
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-area="Admin" asp-controller="Orders"
+                                           asp-action="Details" asp-route-id="@o.OrderId"
+                                           class="fw-bold text-decoration-none">#@o.OrderId</a>
+                                    </td>
+                                    <td class="text-muted small">@o.OrderDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@o.OrderDetails.Sum(d => d.Quantity) cuốn</td>
+                                    <td class="text-end fw-bold text-danger">
+                                        @o.TotalAmount.ToString("N0") đ
+                                    </td>
+                                    <td>
+                                        @{
+                                            var badgeClass = o.Status switch
+                                            {
+                                                "Completed"  => "bg-success",
+                                                "Shipped"    => "bg-info",
+                                                "Processing" => "bg-warning text-dark",
+                                                "Cancelled"  => "bg-secondary",
+                                                _            => "bg-light text-dark border"
+                                            };
+                                        }
+                                        <span class="badge @badgeClass">@o.Status</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-end text-muted small">
+                    Tổng chi tiêu:
+                    <strong class="text-danger">
+                        @Model.Orders.Sum(o => o.TotalAmount).ToString("N0") đ
+                    </strong>
+                </div>
+            }
+            else
+            {
+                <div class="card-body text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                    Chưa có đơn hàng nào
+                </div>
+            }
+        </div>
+    </div>
+</div>
