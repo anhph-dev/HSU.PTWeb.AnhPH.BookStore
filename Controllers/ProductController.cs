@@ -9,7 +9,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
     public class ProductController : Controller
     {
         private readonly AppDbContext _context;
-        private const int PageSize = 10;
+        private const int PageSize = 12;
 
         public ProductController(AppDbContext context)
         {

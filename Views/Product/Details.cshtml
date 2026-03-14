@@ -4,6 +4,18 @@
     ViewData["Title"] = Model.ProductName;
 }
 
+<nav aria-label="breadcrumb" class="my-3">
+    <ol class="breadcrumb bg-transparent p-0 mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none"><i class="bi bi-house-door"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index" class="text-decoration-none">Sách</a></li>
+        @if (Model.Category != null)
+        {
+            <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="text-decoration-none">@Model.Category.CategoryName</a></li>
+        }
+        <li class="breadcrumb-item active text-truncate" aria-current="page" style="max-width: 200px;">@Model.ProductName</li>
+    </ol>
+</nav>
+
 @if (TempData["Success"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -20,264 +32,175 @@
     </div>
 }
 
-<div class="row">
-    <!-- HÌNH ẢNH -->
-    <div class="col-md-5">
-        <div class="card">
-            <div class="card-body p-0">
-                <img src="~/images/@(Model.ImageUrl ?? "products/placeholder.svg")" 
-                     class="img-fluid" 
-                     style="width:100%;max-height:600px;object-fit:contain;" 
-                     onerror="this.src='/images/products/placeholder.svg'" 
-                     alt="@Model.ProductName" />
-            </div>
-        </div>
-    </div>
 
-    <!-- THÔNG TIN -->
-    <div class="col-md-7">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-area="" asp-controller="Product" asp-action="Index">Trang chủ</a></li>
-                @if (Model.Category != null)
-                {
-                    <li class="breadcrumb-item">@Model.Category.CategoryName</li>
-                }
-                <li class="breadcrumb-item active" aria-current="page">@Model.ProductName</li>
-            </ol>
-        </nav>
-
-        <h1 class="h2 mb-2">@Model.ProductName</h1>
-        
-        <!-- BADGES -->
-        <div class="mb-3">
-            @if (Model.IsFeatured)
-            {
-                <span class="badge bg-warning text-dark me-1"><i class="bi bi-star-fill"></i> Nổi bật</span>
-            }
-            @if (Model.IsNewArrival)
-            {
-                <span class="badge bg-info me-1"><i class="bi bi-award-fill"></i> Hàng mới</span>
-            }
-            @if (Model.IsBestSeller)
-            {
-                <span class="badge bg-danger me-1"><i class="bi bi-fire"></i> Bán chạy</span>
-            }
-        </div>
-
-        <!-- AUTHOR & RATING -->
-        <div class="mb-3">
-            @if (!string.IsNullOrEmpty(Model.Author))
-            {
-                <p class="text-muted mb-1">
-                    <i class="bi bi-person-fill"></i> Tác giả: <strong>@Model.Author</strong>
-                </p>
-            }
-            @if (Model.AverageRating > 0)
-            {
-                <div class="d-flex align-items-center">
-                    <span class="text-warning fs-5">@Model.RatingStars</span>
-                    <span class="ms-2 text-muted">(@Model.ReviewCount nhận xét)</span>
+<div class="card shadow-sm border-0 mb-5 rounded-4">
+    <div class="card-body p-4 p-md-5">
+        <div class="row g-5">
+            <!-- Left column: Image -->
+            <div class="col-md-4 text-center">
+                <div class="position-relative">
+                    <img src="~/images/@(Model.ImageUrl ?? "products/placeholder.svg")" 
+                         class="img-fluid rounded shadow" 
+                         style="max-height: 450px; object-fit: contain; width: 100%" 
+                         onerror="this.src='/images/products/placeholder.svg'" 
+                         alt="@Model.ProductName" />
+                    
+                    @if (Model.HasDiscount && Model.DiscountPercent.HasValue)
+                    {
+                        <span class="badge bg-danger position-absolute top-0 start-0 m-3 px-3 py-2 fs-6 rounded-pill shadow-sm">
+                            -@Model.DiscountPercent%
+                        </span>
+                    }
                 </div>
-            }
-        </div>
+            </div>
 
-        <!-- PRICING -->
-        <div class="card mb-3">
-            <div class="card-body">
-                @if (Model.HasDiscount)
-                {
-                    <div class="mb-2">
-                        <span class="text-decoration-line-through text-muted fs-5">@Model.OriginalPrice?.ToString("N0") VND</span>
-                        @if (Model.DiscountPercent.HasValue)
+            <!-- Right column: Information -->
+            <div class="col-md-8">
+                <h2 class="fw-bold mb-3">@Model.ProductName</h2>
+                
+                <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+                    <span class="text-muted"><i class="bi bi-pen me-1"></i> Tác giả: <strong class="text-dark">@(string.IsNullOrEmpty(Model.Author) ? "Đang cập nhật" : Model.Author)</strong></span>
+                    <span class="text-muted border-start ps-3"><i class="bi bi-tag me-1"></i> Thể loại: <strong class="text-dark">@(Model.Category?.CategoryName ?? "Khác")</strong></span>
+                </div>
+
+                <div class="bg-light p-4 rounded-3 mb-4">
+                    @if (Model.HasDiscount)
+                    {
+                        <div class="d-flex align-items-center gap-3">
+                            <h2 class="text-danger fw-bold mb-0"><span id="product-total-price">@Model.Price.ToString("N0")</span> đ</h2>
+                            <span class="text-decoration-line-through text-muted fs-5">@Model.OriginalPrice?.ToString("N0") đ</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <h2 class="text-primary fw-bold mb-0"><span id="product-total-price">@Model.Price.ToString("N0")</span> đ</h2>
+                    }
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-2">Thông tin ngắn gọn:</h6>
+                    <p class="text-muted lh-lg" style="text-align: justify">
+                        @(string.IsNullOrEmpty(Model.ShortDescription) ? "Chưa có mô tả ngắn cho sản phẩm này." : Model.ShortDescription)
+                    </p>
+                </div>
+
+                <!-- Action Form -->
+                <form asp-controller="Cart" asp-action="AddToCart" method="get" class="mb-4">
+                    <input type="hidden" name="productId" value="@Model.ProductId" />
+                    
+                    <div class="d-flex align-items-end gap-4 mb-4">
+                        <div>
+                            <label class="form-label fw-bold small text-muted mb-2">SỐ LƯỢNG</label>
+                            <div class="input-group" style="width: 140px;">
+                                <button class="btn btn-outline-secondary" type="button" onclick="updateQty(-1)">-</button>
+                                <input type="number" id="qty" name="quantity" value="1" min="1" max="@Model.Stock" class="form-control text-center fw-bold" readonly onchange="updatePrice()" />
+                                <button class="btn btn-outline-secondary" type="button" onclick="updateQty(1)">+</button>
+                            </div>
+                        </div>
+                        <div class="pb-1 text-muted small">
+                            @if (Model.IsOutOfStock)
+                            {
+                                <span class="text-danger fw-bold"><i class="bi bi-x-circle"></i> Đã hết hàng</span>
+                            }
+                            else
+                            {
+                                <span>(Còn @Model.Stock sản phẩm)</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        @if (Model.IsOutOfStock)
                         {
-                            <span class="badge bg-danger ms-2">Giảm @Model.DiscountPercent%</span>
+                            <button type="submit" class="btn btn-outline-primary btn-lg px-4 shadow-sm" disabled>
+                                <i class="bi bi-cart-plus me-2"></i> Thêm vào giỏ
+                            </button>
+                            <button type="submit" asp-action="BuyNow" name="action" value="buy_now" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold" disabled>
+                                Mua ngay <i class="bi bi-arrow-right-circle ms-2"></i>
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-outline-primary btn-lg px-4 shadow-sm">
+                                <i class="bi bi-cart-plus me-2"></i> Thêm vào giỏ
+                            </button>
+                            <button type="submit" asp-action="BuyNow" name="action" value="buy_now" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold">
+                                Mua ngay <i class="bi bi-arrow-right-circle ms-2"></i>
+                            </button>
                         }
                     </div>
-                }
-                <h2 class="text-danger mb-0">@Model.Price.ToString("N0") VND</h2>
-                @if (Model.HasDiscount && Model.OriginalPrice.HasValue)
-                {
-                    <small class="text-success">Tiết kiệm: @((Model.OriginalPrice.Value - Model.Price).ToString("N0")) VND</small>
-                }
+                </form>
             </div>
-        </div>
-
-        <!-- SHORT DESCRIPTION -->
-        @if (!string.IsNullOrEmpty(Model.ShortDescription))
-        {
-            <div class="alert alert-light">
-                <i class="bi bi-info-circle"></i> @Model.ShortDescription
-            </div>
-        }
-
-        <!-- STOCK STATUS -->
-        <div class="mb-3">
-            <h5 class="mb-2">Tình trạng:</h5>
-            @if (Model.IsOutOfStock)
-            {
-                <span class="badge bg-danger fs-6">
-                    <i class="bi bi-x-circle"></i> Hết hàng
-                </span>
-            }
-            else if (Model.IsLowStock)
-            {
-                <span class="badge bg-warning text-dark fs-6">
-                    <i class="bi bi-exclamation-triangle"></i> Chỉ còn @Model.Stock sản phẩm
-                </span>
-            }
-            else
-            {
-                <span class="badge bg-success fs-6">
-                    <i class="bi bi-check-circle"></i> Còn hàng (@Model.Stock sản phẩm)
-                </span>
-            }
-        </div>
-
-        <!-- ADD TO CART -->
-        @if (Model.IsAvailable && !Model.IsOutOfStock)
-        {
-            <form asp-area="" asp-controller="Cart" asp-action="AddToCart" method="get" class="mb-3">
-                <input type="hidden" name="productId" value="@Model.ProductId" />
-                <div class="row g-2 align-items-end">
-                    <div class="col-auto">
-                        <label class="form-label">Số lượng:</label>
-                        <input type="number" name="quantity" value="1" min="1" max="@Model.Stock" 
-                               class="form-control" style="width:100px;" 
-                               title="Số lượng (tối đa @Model.Stock)" />
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ hàng
-                        </button>
-                    </div>
-                </div>
-            </form>
-        }
-        else
-        {
-            <button class="btn btn-secondary btn-lg" disabled>
-                <i class="bi bi-cart-x"></i> Không thể đặt hàng
-            </button>
-        }
-
-        <div class="mt-3">
-            <a asp-area="" asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Quay lại danh sách
-            </a>
         </div>
     </div>
 </div>
 
-<!-- DETAILED INFORMATION -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <ul class="nav nav-tabs" id="productTabs" role="tablist">
+<div class="card shadow-sm border-0 rounded-4">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+        <ul class="nav nav-tabs border-bottom-0" id="productTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab">
-                    <i class="bi bi-file-text"></i> Mô tả
+                <button class="nav-link active fw-bold text-primary border-bottom border-primary border-3 bg-transparent" id="desc-tab" data-bs-toggle="tab" data-bs-target="#desc" type="button" role="tab">
+                    MÔ TẢ CHI TIẾT
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs" type="button" role="tab">
-                    <i class="bi bi-info-circle"></i> Thông tin chi tiết
+            <li class="nav-item ms-3" role="presentation">
+                <button class="nav-link text-muted bg-transparent border-0" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs" type="button" role="tab" onclick="this.classList.add('fw-bold','text-primary','border-bottom','border-primary','border-3'); document.getElementById('desc-tab').classList.remove('fw-bold','text-primary','border-bottom','border-primary','border-3');">
+                    THÔNG SỐ KỸ THUẬT
                 </button>
             </li>
         </ul>
-        <div class="tab-content p-3 border border-top-0" id="productTabsContent">
-            <!-- MÔ TẢ -->
-            <div class="tab-pane fade show active" id="description" role="tabpanel">
-                @if (!string.IsNullOrEmpty(Model.Description))
-                {
-                    <p style="white-space: pre-line;">@Model.Description</p>
-                }
-                else
-                {
-                    <p class="text-muted">Chưa có mô tả chi tiết.</p>
-                }
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="productTabsContent">
+            <!-- Mô tả -->
+            <div class="tab-pane fade show active" id="desc" role="tabpanel">
+                <div class="text-muted lh-lg" style="white-space: pre-line; text-align: justify;">
+                    @(string.IsNullOrEmpty(Model.Description) ? "Chưa có mô tả chi tiết." : Model.Description)
+                </div>
             </div>
             
-            <!-- THÔNG TIN CHI TIẾT -->
+            <!-- Thông số -->
             <div class="tab-pane fade" id="specs" role="tabpanel">
-                <table class="table table-bordered">
+                <table class="table table-bordered table-striped w-50 m-0">
                     <tbody>
-                        @if (!string.IsNullOrEmpty(Model.Author))
-                        {
-                            <tr>
-                                <th style="width: 200px;">Tác giả</th>
-                                <td>@Model.Author</td>
-                            </tr>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.ISBN))
-                        {
-                            <tr>
-                                <th>Mã ISBN</th>
-                                <td>@Model.ISBN</td>
-                            </tr>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.Publisher))
-                        {
-                            <tr>
-                                <th>Nhà xuất bản</th>
-                                <td>@Model.Publisher</td>
-                            </tr>
-                        }
-                        @if (Model.PublicationYear.HasValue)
-                        {
-                            <tr>
-                                <th>Năm xuất bản</th>
-                                <td>@Model.PublicationYear</td>
-                            </tr>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.Language))
-                        {
-                            <tr>
-                                <th>Ngôn ngữ</th>
-                                <td>@Model.Language</td>
-                            </tr>
-                        }
-                        @if (Model.PageCount.HasValue)
-                        {
-                            <tr>
-                                <th>Số trang</th>
-                                <td>@Model.PageCount</td>
-                            </tr>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.CoverType))
-                        {
-                            <tr>
-                                <th>Hình thức bìa</th>
-                                <td>@Model.CoverType</td>
-                            </tr>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.Dimensions))
-                        {
-                            <tr>
-                                <th>Kích thước</th>
-                                <td>@Model.Dimensions cm</td>
-                            </tr>
-                        }
-                        @if (Model.Weight.HasValue)
-                        {
-                            <tr>
-                                <th>Trọng lượng</th>
-                                <td>@Model.Weight gram</td>
-                            </tr>
-                        }
-                        <tr>
-                            <th>Danh mục</th>
-                            <td>@(Model.Category?.CategoryName ?? "-")</td>
-                        </tr>
-                        @if (Model.SoldCount > 0)
-                        {
-                            <tr>
-                                <th>Đã bán</th>
-                                <td><span class="badge bg-info">@Model.SoldCount cuốn</span></td>
-                            </tr>
-                        }
+                        <tr><th style="width: 40%" class="bg-light text-muted">Mã ISBN</th><td class="fw-bold">@(Model.ISBN ?? "-")</td></tr>
+                        <tr><th class="bg-light text-muted">Nhà xuất bản</th><td>@(Model.Publisher ?? "-")</td></tr>
+                        <tr><th class="bg-light text-muted">Năm xuất bản</th><td>@(Model.PublicationYear?.ToString() ?? "-")</td></tr>
+                        <tr><th class="bg-light text-muted">Số trang</th><td>@(Model.PageCount?.ToString() ?? "-") trang</td></tr>
+                        <tr><th class="bg-light text-muted">Ngôn ngữ</th><td>@(Model.Language ?? "-")</td></tr>
+                        <tr><th class="bg-light text-muted">Hình thức bìa</th><td>@(Model.CoverType ?? "-")</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        const unitPrice = @Model.Price;
+        const maxStock = @Model.Stock;
+        
+        function updateQty(change) {
+            const qtyInput = document.getElementById('qty');
+            let currentVal = parseInt(qtyInput.value) || 1;
+            let newVal = currentVal + change;
+            
+            if (newVal < 1) newVal = 1;
+            if (newVal > maxStock) newVal = maxStock;
+            
+            qtyInput.value = newVal;
+            updatePrice();
+        }
+
+        function updatePrice() {
+            const qtyInput = document.getElementById('qty');
+            const qty = parseInt(qtyInput.value) || 1;
+            const totalPrice = unitPrice * qty;
+            
+            // Format number as N0 (e.g., 100,000)
+            const formattedPrice = totalPrice.toLocaleString('en-US').replace(/,/g, ',');
+            document.getElementById('product-total-price').innerText = formattedPrice;
+        }
+    </script>
+}

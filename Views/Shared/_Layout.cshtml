@@ -3,63 +3,76 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - BookStore</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] - Nhà Sách Online</title>
+    <!-- Thống nhất dùng Bootstrap 5 CDN tương tự Admin nếu thư mục lib thiếu -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HSU.PTWeb.AnhPH.BookStore.styles.css" asp-append-version="true" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #1a56db !important;
+        }
+    </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm sticky-top">
         <div class="container">
-            <a class="navbar-brand" asp-area="" asp-controller="Product" asp-action="Index">BookStore</a>
+            <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-book-half fs-4"></i>
+                Nhà Sách Online
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-medium">
                     <li class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="Product" asp-action="Index">Trang chủ</a>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="Product" asp-action="Index">Sản phẩm</a>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Sách</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Index">
+                            <i class="bi bi-cart3"></i> Giỏ hàng
+                        </a>
                     </li>
+                    @if (User?.Identity?.IsAuthenticated ?? false)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="Index">Đơn hàng của tôi</a>
+                        </li>
+                    }
                 </ul>
 
-                <ul class="navbar-nav">
+                <ul class="navbar-nav align-items-center">
                     @if (User?.Identity?.IsAuthenticated ?? false)
                     {
                         @if (User.IsInRole("Admin"))
                         {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-gear"></i> Admin
+                            <li class="nav-item me-2">
+                                <a class="btn btn-outline-primary btn-sm" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="bi bi-shield-lock"></i> Kênh Admin
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenu">
-                                    <li><a class="dropdown-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" asp-area="Admin" asp-controller="Products" asp-action="Index">Quản lý sản phẩm</a></li>
-                                    <li><a class="dropdown-item" asp-area="Admin" asp-controller="Orders" asp-action="Index">Quản lý đơn hàng</a></li>
-                                    <li><a class="dropdown-item" asp-area="Admin" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i> Quản lý người dùng</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Revenue">Báo cáo doanh thu</a></li>
-                                </ul>
                             </li>
                         }
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle"></i> @User.Identity.Name
+                            <a class="nav-link dropdown-toggle fw-medium text-dark" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle fs-5 align-middle"></i> @User.Identity.Name
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                                <li><a class="dropdown-item" asp-area="" asp-controller="Order" asp-action="Index">Đơn hàng của tôi</a></li>
-                                <li><a class="dropdown-item" asp-area="" asp-controller="Account" asp-action="Profile">Thông tin cá nhân</a></li>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userMenu">
+                                <li><a class="dropdown-item py-2" asp-area="" asp-controller="Account" asp-action="Profile"><i class="bi bi-person me-2"></i>Thông tin cá nhân</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="post" asp-area="" asp-controller="Account" asp-action="Logout" class="d-inline">
-                                        <button type="submit" class="dropdown-item">Đăng xuất</button>
+                                        <button type="submit" class="dropdown-item py-2 text-danger"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
                                     </form>
                                 </li>
                             </ul>
@@ -67,11 +80,11 @@
                     }
                     else
                     {
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                        <li class="nav-item me-2">
+                            <a class="nav-link fw-medium" asp-area="" asp-controller="Account" asp-action="Login">Đăng nhập</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Register">Đăng ký</a>
+                            <a class="btn btn-primary" asp-area="" asp-controller="Account" asp-action="Register">Đăng ký</a>
                         </li>
                     }
                 </ul>
@@ -79,26 +92,32 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted mt-4">
+    <main role="main" class="flex-grow-1 py-4">
         <div class="container">
-            &copy; @DateTime.Now.Year - BookStore
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="bg-white border-top text-muted mt-auto py-4">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center">
+            <div class="col-md-4 d-flex align-items-center">
+                <span class="mb-3 mb-md-0 text-muted">&copy; @DateTime.Now.Year Nhà Sách Online. All rights reserved.</span>
+            </div>
+            <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+                <li class="ms-3"><a class="text-muted" href="#"><i class="bi bi-facebook fs-5"></i></a></li>
+                <li class="ms-3"><a class="text-muted" href="#"><i class="bi bi-instagram fs-5"></i></a></li>
+                <li class="ms-3"><a class="text-muted" href="#"><i class="bi bi-twitter fs-5"></i></a></li>
+            </ul>
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
-    {{-- Toast notifications --}}
     @if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
     {
-        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
             @if (TempData["SuccessMessage"] != null)
             {
                 <div class="toast align-items-center text-bg-success border-0 show" role="alert">
