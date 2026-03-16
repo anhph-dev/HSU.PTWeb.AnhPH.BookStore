@@ -18,13 +18,13 @@ namespace HSU.PTWeb.AnhPH.BookStore.ViewModels
         [Display(Name = "Địa chỉ giao hàng")]
         public string? Address { get; set; }
 
-        [StringLength(100)]
+        [Required(ErrorMessage = "Vui lòng chọn Tỉnh/Thành phố")]
         [Display(Name = "Tỉnh/Thành phố")]
-        public string? City { get; set; }
+        public int? CityId { get; set; }
 
-        [StringLength(100)]
+        [Required(ErrorMessage = "Vui lòng chọn Phường/Xã")]
         [Display(Name = "Phường/Xã")]
-        public string? Ward { get; set; }
+        public int? WardId { get; set; }
 
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu mới tối thiểu 6 ký tự")]
         [DataType(DataType.Password)]

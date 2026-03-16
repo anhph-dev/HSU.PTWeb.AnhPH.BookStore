@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using HSU.PTWeb.AnhPH.BookStore.Data;
 using HSU.PTWeb.AnhPH.BookStore.Models;
@@ -22,31 +23,39 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             _passwordHasher = passwordHasher;
         }
 
-        private async Task LoadAddressDataAsync()
+        private async Task LoadAddressSelectDataAsync(string cityBagName, string wardJsonBagName)
         {
-            var cities = await _context.Cities
+            var cityOptions = await _context.Cities
                 .Where(c => c.IsActive)
                 .OrderBy(c => c.CityName)
-                .Select(c => c.CityName)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CityId.ToString(),
+                    Text = c.CityName
+                })
                 .ToListAsync();
 
             var wards = await _context.Wards
                 .Where(w => w.IsActive && w.City.IsActive)
-                .Select(w => new { w.City.CityName, w.WardName })
+                .Select(w => new { w.CityId, w.WardId, w.WardName })
                 .ToListAsync();
 
             var wardByCity = wards
-                .GroupBy(x => x.CityName)
-                .ToDictionary(g => g.Key, g => g.Select(x => x.WardName).OrderBy(x => x).ToList());
+                .GroupBy(x => x.CityId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderBy(x => x.WardName)
+                        .Select(x => new { value = x.WardId, text = x.WardName })
+                        .ToList());
 
-            ViewBag.Cities = cities;
-            ViewBag.WardByCity = wardByCity;
+            ViewData[cityBagName] = cityOptions;
+            ViewData[wardJsonBagName] = System.Text.Json.JsonSerializer.Serialize(wardByCity);
         }
 
         // Hiển thị form đăng ký
         public async Task<IActionResult> Register()
         {
-            await LoadAddressDataAsync();
+            await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
             return View();
         }
 
@@ -57,7 +66,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                await LoadAddressDataAsync();
+                await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
                 return View(model);
             }
 
@@ -65,21 +74,39 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             if (await _context.Users.AnyAsync(u => u.Email == model.UserName))
             {
                 ModelState.AddModelError("", "Email đã được sử dụng, vui lòng chọn email khác");
-                await LoadAddressDataAsync();
+                await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
+                return View(model);
+            }
+
+            var selectedCity = await _context.Cities
+                .FirstOrDefaultAsync(c => c.CityId == model.CityId && c.IsActive);
+            if (selectedCity == null)
+            {
+                ModelState.AddModelError(nameof(model.CityId), "Tỉnh/Thành phố không hợp lệ");
+                await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
+                return View(model);
+            }
+
+            var selectedWard = await _context.Wards
+                .FirstOrDefaultAsync(w => w.WardId == model.WardId && w.IsActive);
+            if (selectedWard == null || selectedWard.CityId != selectedCity.CityId)
+            {
+                ModelState.AddModelError(nameof(model.WardId), "Phường/Xã không hợp lệ");
+                await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
                 return View(model);
             }
 
             var user = new User
             {
-                Email        = model.UserName,
+                Email = model.UserName,
                 PasswordHash = _passwordHasher.HashPassword(model.Password),
-                FullName     = model.FullName,
-                PhoneNumber  = model.PhoneNumber,
-                Address      = model.Address,
-                City         = model.City,
-                Ward         = model.Ward,
-                Role         = "Customer",     // Tự động gán role Customer
-                CreatedDate  = DateTime.Now
+                FullName = model.FullName,
+                PhoneNumber = model.PhoneNumber,
+                Address = model.Address,
+                CityId = selectedCity.CityId,
+                WardId = selectedWard.WardId,
+                Role = "Customer",
+                CreatedDate = DateTime.Now
             };
 
             _context.Users.Add(user);
@@ -117,7 +144,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 // Nếu khoá tạm thời và đã hết hạn thì tự mở khoá
                 if (user.LockedUntil.HasValue && user.LockedUntil.Value <= DateTime.Now)
                 {
-                    user.IsLocked    = false;
+                    user.IsLocked = false;
                     user.LockedUntil = null;
                     await _context.SaveChangesAsync();
                 }
@@ -144,7 +171,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = model.RememberMe,
-                ExpiresUtc   = model.RememberMe
+                ExpiresUtc = model.RememberMe
                     ? DateTimeOffset.UtcNow.AddDays(30)
                     : DateTimeOffset.UtcNow.AddHours(2)
             };
@@ -187,22 +214,25 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
 
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users
+                .Include(u => u.City)
+                .Include(u => u.Ward)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
             if (user == null) return NotFound();
 
             var vm = new ProfileViewModel
             {
-                FullName    = user.FullName,
+                FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber,
-                Address     = user.Address,
-                City        = user.City,
-                Ward        = user.Ward,
-                Email       = user.Email,
-                Role        = user.Role,
+                Address = user.Address,
+                CityId = user.CityId,
+                WardId = user.WardId,
+                Email = user.Email,
+                Role = user.Role,
                 CreatedDate = user.CreatedDate
             };
 
-            await LoadAddressDataAsync();
+            await LoadAddressSelectDataAsync("ProfileCities", "ProfileWardByCityJson");
             return View(vm);
         }
 
@@ -220,19 +250,43 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
 
             if (!ModelState.IsValid)
             {
-                model.Email       = user.Email;
-                model.Role        = user.Role;
+                model.Email = user.Email;
+                model.Role = user.Role;
                 model.CreatedDate = user.CreatedDate;
-                await LoadAddressDataAsync();
+                await LoadAddressSelectDataAsync("ProfileCities", "ProfileWardByCityJson");
+                return View(model);
+            }
+
+            var selectedCity = await _context.Cities
+                .FirstOrDefaultAsync(c => c.CityId == model.CityId && c.IsActive);
+            if (selectedCity == null)
+            {
+                ModelState.AddModelError(nameof(model.CityId), "Tỉnh/Thành phố không hợp lệ");
+                model.Email = user.Email;
+                model.Role = user.Role;
+                model.CreatedDate = user.CreatedDate;
+                await LoadAddressSelectDataAsync("ProfileCities", "ProfileWardByCityJson");
+                return View(model);
+            }
+
+            var selectedWard = await _context.Wards
+                .FirstOrDefaultAsync(w => w.WardId == model.WardId && w.IsActive);
+            if (selectedWard == null || selectedWard.CityId != selectedCity.CityId)
+            {
+                ModelState.AddModelError(nameof(model.WardId), "Phường/Xã không hợp lệ");
+                model.Email = user.Email;
+                model.Role = user.Role;
+                model.CreatedDate = user.CreatedDate;
+                await LoadAddressSelectDataAsync("ProfileCities", "ProfileWardByCityJson");
                 return View(model);
             }
 
             // Cập nhật thông tin cá nhân
-            user.FullName    = model.FullName;
+            user.FullName = model.FullName;
             user.PhoneNumber = model.PhoneNumber;
-            user.Address     = model.Address;
-            user.City        = model.City;
-            user.Ward        = model.Ward;
+            user.Address = model.Address;
+            user.CityId = selectedCity.CityId;
+            user.WardId = selectedWard.WardId;
 
             // Đổi mật khẩu nếu có nhập
             if (!string.IsNullOrWhiteSpace(model.NewPassword))

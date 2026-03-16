@@ -58,7 +58,12 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             User dbUser = null;
             if (int.TryParse(userIdClaim, out var userId))
-                dbUser = _context.Users.Find(userId);
+            {
+                dbUser = await _context.Users
+                    .Include(u => u.City)
+                    .Include(u => u.Ward)
+                    .FirstOrDefaultAsync(u => u.UserId == userId);
+            }
 
             var model = new CheckoutViewModel
             {
@@ -66,8 +71,8 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 RecipientName   = dbUser?.FullName ?? User.FindFirstValue(ClaimTypes.Name) ?? "",
                 PhoneNumber     = dbUser?.PhoneNumber ?? "",
                 ShippingAddress = dbUser?.Address ?? "",
-                City            = dbUser?.City ?? "",
-                Ward            = dbUser?.Ward ?? "",
+                City            = dbUser?.City?.CityName ?? "",
+                Ward            = dbUser?.Ward?.WardName ?? "",
                 PaymentMethod   = "COD"
             };
 

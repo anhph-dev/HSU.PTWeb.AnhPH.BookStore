@@ -1,8 +1,9 @@
 ﻿@model HSU.PTWeb.AnhPH.BookStore.ViewModels.ProfileViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = "Thông tin cá nhân";
-    var cities = ViewBag.Cities as List<string> ?? new List<string>();
-    var wardByCityData = ViewBag.WardByCity as Dictionary<string, List<string>> ?? new Dictionary<string, List<string>>();
+    var cities = ViewData["ProfileCities"] as List<SelectListItem> ?? new List<SelectListItem>();
+    var wardByCityJson = ViewData["ProfileWardByCityJson"] as string ?? "{}";
 }
 
 <div class="container">
@@ -56,22 +57,23 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="City" class="form-label fw-bold"></label>
-                            <select asp-for="City" class="form-select" id="citySelect">
+                            <label asp-for="CityId" class="form-label fw-bold"></label>
+                            <select asp-for="CityId" class="form-select" id="citySelect">
                                 <option value="">-- Chọn Tỉnh/Thành phố --</option>
                                 @foreach (var city in cities)
                                 {
-                                    <option value="@city">@city</option>
+                                    <option value="@city.Value">@city.Text</option>
                                 }
                             </select>
+                            <span asp-validation-for="CityId" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Ward" class="form-label fw-bold"></label>
-                            <select asp-for="Ward" class="form-select" id="wardSelect">
+                            <label asp-for="WardId" class="form-label fw-bold"></label>
+                            <select asp-for="WardId" class="form-select" id="wardSelect">
                                 <option value="">-- Chọn Phường/Xã --</option>
                             </select>
-                            <span asp-validation-for="Ward" class="text-danger small"></span>
+                            <span asp-validation-for="WardId" class="text-danger small"></span>
                         </div>
 
                         <h6 class="text-muted mb-3 border-bottom pb-2 mt-2">Đổi mật khẩu <small class="text-muted fw-normal">(để trống nếu không muốn đổi)</small></h6>
@@ -136,23 +138,23 @@
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
-        const wardByCity = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(wardByCityData));
+        const wardByCity = @Html.Raw(wardByCityJson);
 
         const citySelect = document.getElementById('citySelect');
         const wardSelect = document.getElementById('wardSelect');
 
         function bindWards() {
-            const selectedCity = citySelect.value;
-            const currentWard = '@(Model?.Ward ?? "")';
+            const selectedCity = Number(citySelect.value);
+            const currentWard = '@(Model?.WardId?.ToString() ?? "")';
 
             wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
             if (!selectedCity || !wardByCity[selectedCity]) return;
 
             wardByCity[selectedCity].forEach(w => {
                 const opt = document.createElement('option');
-                opt.value = w;
-                opt.textContent = w;
-                if (currentWard === w) opt.selected = true;
+                opt.value = w.value;
+                opt.textContent = w.text;
+                if (currentWard === String(w.value)) opt.selected = true;
                 wardSelect.appendChild(opt);
             });
         }

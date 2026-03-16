@@ -42,13 +42,17 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         [Display(Name = "Địa chỉ")]
         public string Address { get; set; }
 
-        [StringLength(100)]
         [Display(Name = "Tỉnh/Thành phố")]
-        public string City { get; set; }
+        public int? CityId { get; set; }
 
-        [StringLength(100)]
         [Display(Name = "Phường/Xã")]
-        public string? Ward { get; set; }
+        public int? WardId { get; set; }
+
+        [ForeignKey(nameof(CityId))]
+        public City? City { get; set; }
+
+        [ForeignKey(nameof(WardId))]
+        public Ward? Ward { get; set; }
 
         // Trạng thái tài khoản
         [Display(Name = "Khoá tài khoản")]

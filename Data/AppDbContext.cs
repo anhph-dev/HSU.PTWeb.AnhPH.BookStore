@@ -77,6 +77,20 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
                 .HasForeignKey(w => w.CityId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Quan hệ: City 1 - n User
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.City)
+                .WithMany()
+                .HasForeignKey(u => u.CityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Quan hệ: Ward 1 - n User
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Ward)
+                .WithMany()
+                .HasForeignKey(u => u.WardId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<City>()
                 .HasIndex(c => c.CityName)
                 .IsUnique();
