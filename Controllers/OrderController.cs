@@ -22,8 +22,29 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             _context = context;
         }
 
+        private async Task LoadAddressDataAsync()
+        {
+            var cities = await _context.Cities
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.CityName)
+                .Select(c => c.CityName)
+                .ToListAsync();
+
+            var wards = await _context.Wards
+                .Where(w => w.IsActive && w.City.IsActive)
+                .Select(w => new { w.City.CityName, w.WardName })
+                .ToListAsync();
+
+            var wardByCity = wards
+                .GroupBy(x => x.CityName)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.WardName).OrderBy(x => x).ToList());
+
+            ViewBag.Cities = cities;
+            ViewBag.WardByCity = wardByCity;
+        }
+
         // Hiển thị trang Checkout - tự động điền thông tin từ profile user
-        public IActionResult Checkout()
+        public async Task<IActionResult> Checkout()
         {
             var cart = SessionHelper.GetObjectFromJson<List<CartItem>>(HttpContext.Session, CartSessionKey) ?? new List<CartItem>();
 
@@ -46,11 +67,13 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 PhoneNumber     = dbUser?.PhoneNumber ?? "",
                 ShippingAddress = dbUser?.Address ?? "",
                 City            = dbUser?.City ?? "",
+                Ward            = dbUser?.Ward ?? "",
                 PaymentMethod   = "COD"
             };
 
             ViewBag.Cart  = cart;
             ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+            await LoadAddressDataAsync();
 
             return View(model);
         }
@@ -72,6 +95,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             {
                 ViewBag.Cart = cart;
                 ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+                await LoadAddressDataAsync();
                 return View(model);
             }
 
@@ -95,6 +119,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 TempData["ErrorMessage"] = string.Join("<br/>", errors);
                 ViewBag.Cart = cart;
                 ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+                await LoadAddressDataAsync();
                 return View(model);
             }
 
@@ -118,9 +143,8 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 Email = model.Email,
                 ShippingAddress = model.ShippingAddress,
                 City = model.City,
-                District = model.District,
                 Ward = model.Ward,
-                Notes = model.Notes,
+                Notes = model.Notes ?? string.Empty,
                 PaymentMethod = model.PaymentMethod,
                 PaymentStatus = "Pending"
             };
@@ -250,7 +274,6 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 Email = order.Email,
                 ShippingAddress = order.ShippingAddress,
                 City = order.City,
-                District = order.District,
                 Ward = order.Ward,
                 Notes = order.Notes,
                 PaymentMethod = order.PaymentMethod,

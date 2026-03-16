@@ -1,0 +1,55 @@
+﻿@model IEnumerable<HSU.PTWeb.AnhPH.BookStore.Models.Ward>
+@using HSU.PTWeb.AnhPH.BookStore.Models
+@{
+    ViewData["Title"] = "Quản lý Phường/Xã";
+    var search = ViewData["Search"] as string ?? "";
+    var cityId = ViewData["CityId"] != null ? (int)ViewData["CityId"] : 0;
+    var cities = ViewData["Cities"] as IEnumerable<City> ?? Enumerable.Empty<City>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3 mb-0">Quản lý Phường/Xã</h2>
+    <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-circle me-1"></i> Thêm Phường/Xã</a>
+</div>
+
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <select name="cityId" class="form-select">
+            <option value="0">Tất cả Tỉnh/TP</option>
+            @foreach (var c in cities)
+            {
+                <option value="@c.CityId" selected="@(c.CityId == cityId)">@c.CityName</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-6"><input type="search" name="search" value="@search" class="form-control" placeholder="Tìm Phường/Xã..." /></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">Lọc</button></div>
+</form>
+
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light"><tr><th>Phường/Xã</th><th>Tỉnh/TP</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
+            <tbody>
+            @foreach (var w in Model)
+            {
+                <tr>
+                    <td>@w.WardName</td>
+                    <td>@w.City?.CityName</td>
+                    <td>@(w.IsActive ? "Hoạt động" : "Ngừng")</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@w.WardId" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <form asp-action="Delete" asp-route-id="@w.WardId" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa Phường/Xã này?')"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -61,16 +61,12 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         public string City { get; set; }
 
         [StringLength(100)]
-        [Display(Name = "Quận/Huyện")]
-        public string District { get; set; }
-
-        [StringLength(100)]
         [Display(Name = "Phường/Xã")]
-        public string Ward { get; set; }
+        public string? Ward { get; set; }
 
         [StringLength(500)]
         [Display(Name = "Ghi chú")]
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
 
         // Payment Information
         [Required]

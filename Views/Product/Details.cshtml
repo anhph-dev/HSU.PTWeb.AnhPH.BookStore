@@ -115,7 +115,7 @@
                             <button type="submit" class="btn btn-outline-primary btn-lg px-4 shadow-sm" disabled>
                                 <i class="bi bi-cart-plus me-2"></i> Thêm vào giỏ
                             </button>
-                            <button type="submit" asp-action="BuyNow" name="action" value="buy_now" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold" disabled>
+                            <button type="submit" asp-controller="Cart" asp-action="BuyNow" name="action" value="buy_now" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold" disabled>
                                 Mua ngay <i class="bi bi-arrow-right-circle ms-2"></i>
                             </button>
                         }
@@ -124,7 +124,7 @@
                             <button type="submit" class="btn btn-outline-primary btn-lg px-4 shadow-sm">
                                 <i class="bi bi-cart-plus me-2"></i> Thêm vào giỏ
                             </button>
-                            <button type="submit" asp-action="BuyNow" name="action" value="buy_now" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold">
+                            <button type="submit" asp-controller="Cart" asp-action="BuyNow" name="action" value="buy_now" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold">
                                 Mua ngay <i class="bi bi-arrow-right-circle ms-2"></i>
                             </button>
                         }

@@ -22,9 +22,31 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             _passwordHasher = passwordHasher;
         }
 
-        // Hiển thị form đăng ký
-        public IActionResult Register()
+        private async Task LoadAddressDataAsync()
         {
+            var cities = await _context.Cities
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.CityName)
+                .Select(c => c.CityName)
+                .ToListAsync();
+
+            var wards = await _context.Wards
+                .Where(w => w.IsActive && w.City.IsActive)
+                .Select(w => new { w.City.CityName, w.WardName })
+                .ToListAsync();
+
+            var wardByCity = wards
+                .GroupBy(x => x.CityName)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.WardName).OrderBy(x => x).ToList());
+
+            ViewBag.Cities = cities;
+            ViewBag.WardByCity = wardByCity;
+        }
+
+        // Hiển thị form đăng ký
+        public async Task<IActionResult> Register()
+        {
+            await LoadAddressDataAsync();
             return View();
         }
 
@@ -33,12 +55,17 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                await LoadAddressDataAsync();
+                return View(model);
+            }
 
             // Kiểm tra email đã tồn tại chưa
             if (await _context.Users.AnyAsync(u => u.Email == model.UserName))
             {
                 ModelState.AddModelError("", "Email đã được sử dụng, vui lòng chọn email khác");
+                await LoadAddressDataAsync();
                 return View(model);
             }
 
@@ -50,6 +77,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 PhoneNumber  = model.PhoneNumber,
                 Address      = model.Address,
                 City         = model.City,
+                Ward         = model.Ward,
                 Role         = "Customer",     // Tự động gán role Customer
                 CreatedDate  = DateTime.Now
             };
@@ -168,11 +196,13 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 PhoneNumber = user.PhoneNumber,
                 Address     = user.Address,
                 City        = user.City,
+                Ward        = user.Ward,
                 Email       = user.Email,
                 Role        = user.Role,
                 CreatedDate = user.CreatedDate
             };
 
+            await LoadAddressDataAsync();
             return View(vm);
         }
 
@@ -193,6 +223,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 model.Email       = user.Email;
                 model.Role        = user.Role;
                 model.CreatedDate = user.CreatedDate;
+                await LoadAddressDataAsync();
                 return View(model);
             }
 
@@ -201,6 +232,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             user.PhoneNumber = model.PhoneNumber;
             user.Address     = model.Address;
             user.City        = model.City;
+            user.Ward        = model.Ward;
 
             // Đổi mật khẩu nếu có nhập
             if (!string.IsNullOrWhiteSpace(model.NewPassword))

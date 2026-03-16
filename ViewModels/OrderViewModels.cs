@@ -30,7 +30,6 @@
         public string Email { get; set; }
         public string ShippingAddress { get; set; }
         public string City { get; set; }
-        public string District { get; set; }
         public string Ward { get; set; }
         public string Notes { get; set; }
         

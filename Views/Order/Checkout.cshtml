@@ -4,6 +4,8 @@
     ViewData["Title"] = "Thanh toán";
     var cart = ViewBag.Cart as List<HSU.PTWeb.AnhPH.BookStore.Models.CartItem> ?? new List<HSU.PTWeb.AnhPH.BookStore.Models.CartItem>();
     var total = ViewBag.Total != null ? (decimal)ViewBag.Total : 0;
+    var cities = ViewBag.Cities as List<string> ?? new List<string>();
+    var wardByCityData = ViewBag.WardByCity as Dictionary<string, List<string>> ?? new Dictionary<string, List<string>>();
 }
 
 <div class="row mb-4">
@@ -40,6 +42,7 @@ else
                 <div class="card-body">
                     <form asp-action="Checkout" method="post" id="checkoutForm">
                         @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 mb-3"></div>
                         <div class="row g-3">
                             <div class="col-md-12">
                                 <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
@@ -58,16 +61,21 @@ else
                             </div>
                             <div class="col-md-12">
                                 <label asp-for="City" class="form-label">Tỉnh / Thành phố <span class="text-danger">*</span></label>
-                                <input asp-for="City" class="form-control" placeholder="Nhập Tỉnh / Thành phố" required />
+                                <select asp-for="City" class="form-select" id="citySelect" required>
+                                    <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                    @foreach (var city in cities)
+                                    {
+                                        <option value="@city">@city</option>
+                                    }
+                                </select>
                                 <span asp-validation-for="City" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-6">
-                                <label asp-for="District" class="form-label">Quận / Huyện</label>
-                                <input asp-for="District" class="form-control" placeholder="Nhập Quận / Huyện" />
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Ward" class="form-label">Phường / Xã</label>
-                                <input asp-for="Ward" class="form-control" placeholder="Nhập Phường / Xã" />
+                            <div class="col-md-12">
+                                <label asp-for="Ward" class="form-label">Phường / Xã <span class="text-danger">*</span></label>
+                                <select asp-for="Ward" class="form-select" id="wardSelect" required>
+                                    <option value="">-- Chọn Phường/Xã --</option>
+                                </select>
+                                <span asp-validation-for="Ward" class="text-danger small"></span>
                             </div>
                             <div class="col-md-12">
                                 <label asp-for="ShippingAddress" class="form-label">Địa chỉ giao hàng (Số nhà, Đường) <span class="text-danger">*</span></label>
@@ -126,7 +134,7 @@ else
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <button type="submit" form="checkoutForm" class="btn btn-success btn-lg">
+                        <button type="button" id="btnPlaceOrder" class="btn btn-success btn-lg">
                             <i class="bi bi-check-circle me-1"></i> Xác nhận đặt hàng
                         </button>
                         <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary">
@@ -137,4 +145,43 @@ else
             </div>
         </div>
     </div>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        const wardByCity = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(wardByCityData));
+
+        const citySelect = document.getElementById('citySelect');
+        const wardSelect = document.getElementById('wardSelect');
+
+        function bindWards() {
+            const selectedCity = citySelect.value;
+            const currentWard = '@(Model?.Ward ?? "")';
+
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            if (!selectedCity || !wardByCity[selectedCity]) return;
+
+            wardByCity[selectedCity].forEach(w => {
+                const opt = document.createElement('option');
+                opt.value = w;
+                opt.textContent = w;
+                if (currentWard === w) opt.selected = true;
+                wardSelect.appendChild(opt);
+            });
+        }
+
+        document.getElementById('btnPlaceOrder')?.addEventListener('click', function () {
+            const form = document.getElementById('checkoutForm');
+            if (!form) return;
+            if (form.requestSubmit) {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+        });
+
+        citySelect.addEventListener('change', bindWards);
+        bindWards();
+    </script>
 }

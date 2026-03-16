@@ -12,29 +12,33 @@ namespace HSU.PTWeb.AnhPH.BookStore.ViewModels
         [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
         [StringLength(15)]
         [Display(Name = "Số điện thoại")]
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [StringLength(500)]
         [Display(Name = "Địa chỉ giao hàng")]
-        public string Address { get; set; }
+        public string? Address { get; set; }
 
         [StringLength(100)]
         [Display(Name = "Tỉnh/Thành phố")]
-        public string City { get; set; }
+        public string? City { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Phường/Xã")]
+        public string? Ward { get; set; }
 
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu mới tối thiểu 6 ký tự")]
         [DataType(DataType.Password)]
         [Display(Name = "Mật khẩu mới")]
-        public string NewPassword { get; set; }
+        public string? NewPassword { get; set; }
 
         [DataType(DataType.Password)]
         [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
         [Display(Name = "Xác nhận mật khẩu mới")]
-        public string ConfirmPassword { get; set; }
+        public string? ConfirmPassword { get; set; }
 
         // Read-only display fields
-        public string Email { get; set; }
-        public string Role { get; set; }
+        public string? Email { get; set; }
+        public string? Role { get; set; }
         public DateTime CreatedDate { get; set; }
     }
 }

@@ -16,7 +16,7 @@
 </div>
 
 <div class="row">
-    {{-- Thông tin người dùng --}}
+    @* Thông tin người dùng *@
     <div class="col-lg-5 mb-4">
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
@@ -49,6 +49,10 @@
                         <td>@(Model.City ?? "—")</td>
                     </tr>
                     <tr>
+                        <td class="text-muted">Phường/Xã</td>
+                        <td>@(Model.Ward ?? "—")</td>
+                    </tr>
+                    <tr>
                         <td class="text-muted">Role</td>
                         <td>
                             <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-primary")">
@@ -64,9 +68,11 @@
             </div>
         </div>
 
-        {{-- Quản lý khoá tài khoản --}}
+        @* Quản lý khoá tài khoản *@
         <div class="card shadow-sm mt-3">
-            <div class="card-header"><h6 class="mb-0">Quản lý tài khoản</h6></div>
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-gear"></i> Quản lý tài khoản</h6>
+            </div>
             <div class="card-body">
                 @if (Model.IsLocked)
                 {
@@ -111,7 +117,7 @@
                     </form>
                 }
 
-                {{-- Đổi Role --}}
+                @* Đổi Role *@
                 @if (Model.Role != "Admin")
                 {
                     <hr />
@@ -138,7 +144,7 @@
         </div>
     </div>
 
-    {{-- Lịch sử đơn hàng --}}
+    @* Lịch sử đơn hàng *@
     <div class="col-lg-7 mb-4">
         <div class="card shadow-sm">
             <div class="card-header bg-info text-white">
@@ -178,11 +184,11 @@
                                         @{
                                             var badgeClass = o.Status switch
                                             {
-                                                "Completed"  => "bg-success",
-                                                "Shipped"    => "bg-info",
+                                                "Completed" => "bg-success",
+                                                "Shipped" => "bg-info",
                                                 "Processing" => "bg-warning text-dark",
-                                                "Cancelled"  => "bg-secondary",
-                                                _            => "bg-light text-dark border"
+                                                "Cancelled" => "bg-secondary",
+                                                _ => "bg-light text-dark border"
                                             };
                                         }
                                         <span class="badge @badgeClass">@o.Status</span>

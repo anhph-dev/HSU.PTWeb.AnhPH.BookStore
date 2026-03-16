@@ -1,0 +1,24 @@
+﻿@model HSU.PTWeb.AnhPH.BookStore.Models.City
+@{ ViewData["Title"] = "Sửa Tỉnh/Thành phố"; }
+
+<h3 class="mb-3">Sửa Tỉnh/Thành phố</h3>
+<div class="card shadow-sm border-0"><div class="card-body">
+<form asp-action="Edit" asp-route-id="@Model.CityId" method="post">
+    @Html.AntiForgeryToken()
+    <input asp-for="CityId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <div class="mb-3">
+        <label asp-for="CityName" class="form-label"></label>
+        <input asp-for="CityName" class="form-control" />
+        <span asp-validation-for="CityName" class="text-danger small"></span>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label">Hoạt động</label>
+    </div>
+    <button class="btn btn-primary">Cập nhật</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+</form>
+</div></div>
+
+@section Scripts { @{await Html.RenderPartialAsync("_ValidationScriptsPartial");} }

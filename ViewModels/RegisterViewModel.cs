@@ -39,5 +39,9 @@ namespace HSU.PTWeb.AnhPH.BookStore.ViewModels
         [StringLength(100)]
         [Display(Name = "Tỉnh/Thành phố")]
         public string City { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Phường/Xã")]
+        public string? Ward { get; set; }
     }
 }

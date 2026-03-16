@@ -17,6 +17,8 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<City> Cities { get; set; }
+        public DbSet<Ward> Wards { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +30,8 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             modelBuilder.Entity<Product>().ToTable("Products");
             modelBuilder.Entity<Order>().ToTable("Orders");
             modelBuilder.Entity<OrderDetail>().ToTable("OrderDetails");
+            modelBuilder.Entity<City>().ToTable("Cities");
+            modelBuilder.Entity<Ward>().ToTable("Wards");
 
             // Thiết lập khóa chính
             modelBuilder.Entity<User>().HasKey(u => u.UserId);
@@ -35,6 +39,8 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             modelBuilder.Entity<Product>().HasKey(p => p.ProductId);
             modelBuilder.Entity<Order>().HasKey(o => o.OrderId);
             modelBuilder.Entity<OrderDetail>().HasKey(od => od.OrderDetailId);
+            modelBuilder.Entity<City>().HasKey(c => c.CityId);
+            modelBuilder.Entity<Ward>().HasKey(w => w.WardId);
 
             // Quan hệ: Category 1 - n Product
             modelBuilder.Entity<Product>()
@@ -63,6 +69,21 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Quan hệ: City 1 - n Ward
+            modelBuilder.Entity<Ward>()
+                .HasOne(w => w.City)
+                .WithMany(c => c.Wards)
+                .HasForeignKey(w => w.CityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<City>()
+                .HasIndex(c => c.CityName)
+                .IsUnique();
+
+            modelBuilder.Entity<Ward>()
+                .HasIndex(w => new { w.CityId, w.WardName })
+                .IsUnique();
 
             // Thiết lập giá trị mặc định cho CreatedDate
             modelBuilder.Entity<User>()

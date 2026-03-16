@@ -46,6 +46,10 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         [Display(Name = "Tỉnh/Thành phố")]
         public string City { get; set; }
 
+        [StringLength(100)]
+        [Display(Name = "Phường/Xã")]
+        public string? Ward { get; set; }
+
         // Trạng thái tài khoản
         [Display(Name = "Khoá tài khoản")]
         public bool IsLocked { get; set; } = false;

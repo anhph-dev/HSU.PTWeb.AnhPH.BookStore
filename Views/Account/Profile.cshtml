@@ -1,5 +1,9 @@
 ﻿@model HSU.PTWeb.AnhPH.BookStore.ViewModels.ProfileViewModel
-@{ ViewData["Title"] = "Thông tin cá nhân"; }
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+    var cities = ViewBag.Cities as List<string> ?? new List<string>();
+    var wardByCityData = ViewBag.WardByCity as Dictionary<string, List<string>> ?? new Dictionary<string, List<string>>();
+}
 
 <div class="container">
     <div class="row mt-4">
@@ -53,17 +57,21 @@
 
                         <div class="mb-3">
                             <label asp-for="City" class="form-label fw-bold"></label>
-                            <select asp-for="City" class="form-select">
+                            <select asp-for="City" class="form-select" id="citySelect">
                                 <option value="">-- Chọn Tỉnh/Thành phố --</option>
-                                <option>TP. Hồ Chí Minh</option>
-                                <option>Hà Nội</option>
-                                <option>Đà Nẵng</option>
-                                <option>Cần Thơ</option>
-                                <option>Bình Dương</option>
-                                <option>Đồng Nai</option>
-                                <option>Hải Phòng</option>
-                                <option>Huế</option>
+                                @foreach (var city in cities)
+                                {
+                                    <option value="@city">@city</option>
+                                }
                             </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Ward" class="form-label fw-bold"></label>
+                            <select asp-for="Ward" class="form-select" id="wardSelect">
+                                <option value="">-- Chọn Phường/Xã --</option>
+                            </select>
+                            <span asp-validation-for="Ward" class="text-danger small"></span>
                         </div>
 
                         <h6 class="text-muted mb-3 border-bottom pb-2 mt-2">Đổi mật khẩu <small class="text-muted fw-normal">(để trống nếu không muốn đổi)</small></h6>
@@ -127,4 +135,29 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        const wardByCity = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(wardByCityData));
+
+        const citySelect = document.getElementById('citySelect');
+        const wardSelect = document.getElementById('wardSelect');
+
+        function bindWards() {
+            const selectedCity = citySelect.value;
+            const currentWard = '@(Model?.Ward ?? "")';
+
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            if (!selectedCity || !wardByCity[selectedCity]) return;
+
+            wardByCity[selectedCity].forEach(w => {
+                const opt = document.createElement('option');
+                opt.value = w;
+                opt.textContent = w;
+                if (currentWard === w) opt.selected = true;
+                wardSelect.appendChild(opt);
+            });
+        }
+
+        citySelect.addEventListener('change', bindWards);
+        bindWards();
+    </script>
 }

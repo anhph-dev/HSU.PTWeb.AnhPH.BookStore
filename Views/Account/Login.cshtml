@@ -4,72 +4,72 @@
     ViewData["Title"] = "Đăng nhập";
 }
 
-<div class="row justify-content-center mt-5 mb-5">
-    <div class="col-md-4">
-        <div class="card shadow border-0 rounded-3">
-            <div class="card-header bg-white text-center py-4 border-bottom-0">
-                <h3 class="mb-0 fw-bold text-primary"><i class="bi bi-person-circle"></i> Đăng nhập</h3>
-            </div>
-            <div class="card-body p-4 pt-0">
+<div class="container">
+    <div class="row justify-content-center mt-5 mb-5">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
+            <div class="card shadow border-0 rounded-3">
+                <div class="card-header bg-white text-center py-4 border-bottom-0">
+                    <h3 class="mb-0 fw-bold text-primary"><i class="bi bi-person-circle"></i> Đăng nhập</h3>
+                </div>
+                <div class="card-body p-4 pt-0">
 
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div class="alert alert-danger py-2 px-3">
-                        <ul class="mb-0 ps-3">
-                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                            {
-                                <li>@error.ErrorMessage</li>
-                            }
-                        </ul>
-                    </div>
-                }
-
-                <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
-                    <div class="mb-3">
-                        <label asp-for="UserName" class="form-label text-muted fw-semibold">Email</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
-                            <input asp-for="UserName" type="email" class="form-control border-start-0 ps-0 text-dark"
-                                placeholder="Nhập địa chỉ email" />
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger py-2 px-3">
+                            <ul class="mb-0 ps-3">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
                         </div>
-                        <span asp-validation-for="UserName" class="text-danger small"></span>
-                    </div>
+                    }
 
-                    <div class="mb-3">
-                        <label asp-for="Password" class="form-label text-muted fw-semibold">Mật khẩu</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-lock"></i></span>
-                            <input asp-for="Password" type="password"
-                                class="form-control border-start-0 border-end-0 ps-0 text-dark"
-                                placeholder="Nhập mật khẩu" id="passwordInput" />
-                            <button class="btn btn-outline-secondary border-start-0 bg-light" type="button"
-                                onclick="togglePassword()">
-                                <i class="bi bi-eye" id="eyeIcon"></i>
+                    <form asp-action="Login" asp-route-returnUrl="@(ViewData["ReturnUrl"])" method="post">
+                        <div class="mb-3">
+                            <label asp-for="UserName" class="form-label text-muted fw-semibold">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="UserName" type="email" class="form-control text-dark"
+                                       placeholder="Nhập địa chỉ email" />
+                            </div>
+                            <span asp-validation-for="UserName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label text-muted fw-semibold">Mật khẩu</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
+                                <input asp-for="Password" type="password" class="form-control text-dark"
+                                       placeholder="Nhập mật khẩu" id="passwordInput" />
+                                <button class="btn btn-outline-secondary" type="button"
+                                        onclick="togglePassword()" aria-label="Hiện hoặc ẩn mật khẩu">
+                                    <i class="bi bi-eye" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4 d-flex justify-content-between align-items-center">
+                            <div class="form-check">
+                                <input asp-for="RememberMe" class="form-check-input" id="rememberMe" />
+                                <label asp-for="RememberMe" class="form-check-label text-muted" for="rememberMe">Ghi nhớ tôi</label>
+                            </div>
+                            <a href="#" class="text-decoration-none small">Quên mật khẩu?</a>
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg fw-semibold shadow-sm">
+                                Đăng nhập
                             </button>
                         </div>
-                        <span asp-validation-for="Password" class="text-danger small"></span>
-                    </div>
+                    </form>
 
-                    <div class="mb-4 d-flex justify-content-between align-items-center">
-                        <div class="form-check">
-                            <input asp-for="RememberMe" class="form-check-input" id="rememberMe" />
-                            <label asp-for="RememberMe" class="form-check-label text-muted" for="rememberMe">Ghi nhớ tôi
-                            </label>
-                        </div>
-                        <a href="#" class="text-decoration-none small">Quên mật khẩu?</a>
-                    </div>
-
-                    <div class="d-grid mb-3">
-                        <button type="submit" class="btn btn-primary btn-lg fw-semibold shadow-sm">
-                            Đăng nhập
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-            <div class="card-footer bg-light text-center py-3 border-top-0 rounded-bottom-3">
-                <span class="text-muted">Chưa có tài khoản?</span>
-                <a asp-action="Register" class="text-decoration-none fw-semibold">Đăng ký ngay</a>
+                </div>
+                <div class="card-footer bg-light text-center py-3 border-top-0 rounded-bottom-3">
+                    <span class="text-muted">Chưa có tài khoản?</span>
+                    <a asp-action="Register" class="text-decoration-none fw-semibold">Đăng ký ngay</a>
+                </div>
             </div>
         </div>
     </div>
@@ -81,6 +81,7 @@
         function togglePassword() {
             const input = document.getElementById('passwordInput');
             const icon = document.getElementById('eyeIcon');
+
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.className = 'bi bi-eye-slash';
