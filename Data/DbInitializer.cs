@@ -1,5 +1,6 @@
 ﻿using HSU.PTWeb.AnhPH.BookStore.Models;
 using HSU.PTWeb.AnhPH.BookStore.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace HSU.PTWeb.AnhPH.BookStore.Data
 {
@@ -38,12 +39,35 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
 
             if (context.Users.Any())
             {
+                var cityMap = context.Cities.ToDictionary(c => c.CityName, c => c.CityId);
+                var wardMap = context.Wards
+                    .GroupBy(w => w.CityId)
+                    .ToDictionary(g => g.Key, g => g.ToDictionary(x => x.WardName, x => x.WardId));
+
                 var existingUsers = context.Users.ToList();
                 foreach (var u in existingUsers)
                 {
-                    if (string.IsNullOrWhiteSpace(u.Ward) && !string.IsNullOrWhiteSpace(u.City) && wardByCity.TryGetValue(u.City, out var wards) && wards.Length > 0)
+                    if (!u.CityId.HasValue)
                     {
-                        u.Ward = wards[0];
+                        var defaultCityName = wardByCity.Keys.First();
+                        var cityName = defaultCityName;
+
+                        if (cityMap.TryGetValue(cityName, out var cid))
+                        {
+                            u.CityId = cid;
+                            if (!u.WardId.HasValue && wardMap.TryGetValue(cid, out var wardByName))
+                            {
+                                var defaultWard = wardByName.Values.FirstOrDefault();
+                                if (defaultWard > 0)
+                                    u.WardId = defaultWard;
+                            }
+                        }
+                    }
+                    else if (!u.WardId.HasValue && u.CityId.HasValue && wardMap.TryGetValue(u.CityId.Value, out var wardsOfCity))
+                    {
+                        var defaultWard = wardsOfCity.Values.FirstOrDefault();
+                        if (defaultWard > 0)
+                            u.WardId = defaultWard;
                     }
                 }
 
@@ -62,14 +86,21 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
 
             var hasher = new PasswordHasher();
 
+            var cityMapSeed = context.Cities.ToDictionary(c => c.CityName, c => c.CityId);
+            var wardMapSeed = context.Wards
+                .Include(w => w.City)
+                .ToList()
+                .GroupBy(w => w.City.CityName)
+                .ToDictionary(g => g.Key, g => g.ToDictionary(x => x.WardName, x => x.WardId));
+
             // ===== USERS =====
             var users = new List<User>
             {
-                new User { Email = "admin@bookstore.com",    FullName = "Quản trị viên", PasswordHash = hasher.HashPassword("Admin@123"),    Role = "Admin",    PhoneNumber = "0901234567", Address = "123 Nguyễn Huệ",    City = "TP. Hồ Chí Minh", Ward = "Phường Bến Nghé", CreatedDate = DateTime.Now },
-                new User { Email = "customer1@gmail.com",   FullName = "Nguyễn Văn A",  PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0912345678", Address = "45 Lê Lợi",         City = "TP. Hồ Chí Minh", Ward = "Phường Bến Thành", CreatedDate = DateTime.Now.AddDays(-30) },
-                new User { Email = "customer2@gmail.com",   FullName = "Trần Thị B",    PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0923456789", Address = "78 Trần Hưng Đạo",  City = "Hà Nội",           Ward = "Phường Hàng Bạc", CreatedDate = DateTime.Now.AddDays(-25) },
-                new User { Email = "customer3@gmail.com",   FullName = "Lê Văn C",      PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0934567890", Address = "12 Pasteur",        City = "Đà Nẵng",          Ward = "Phường Thạch Thang", CreatedDate = DateTime.Now.AddDays(-20) },
-                new User { Email = "customer4@gmail.com",   FullName = "Phạm Thị D",    PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0945678901", Address = "56 Điện Biên Phủ",  City = "Cần Thơ",          Ward = "Phường An Cư", CreatedDate = DateTime.Now.AddDays(-15) },
+                new User { Email = "admin@bookstore.com", FullName = "Quản trị viên", PasswordHash = hasher.HashPassword("Admin@123"), Role = "Admin", PhoneNumber = "0901234567", Address = "123 Nguyễn Huệ", CityId = cityMapSeed["TP. Hồ Chí Minh"], WardId = wardMapSeed["TP. Hồ Chí Minh"]["Phường Bến Nghé"], CreatedDate = DateTime.Now },
+                new User { Email = "customer1@gmail.com", FullName = "Nguyễn Văn A", PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0912345678", Address = "45 Lê Lợi", CityId = cityMapSeed["TP. Hồ Chí Minh"], WardId = wardMapSeed["TP. Hồ Chí Minh"]["Phường Bến Thành"], CreatedDate = DateTime.Now.AddDays(-30) },
+                new User { Email = "customer2@gmail.com", FullName = "Trần Thị B", PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0923456789", Address = "78 Trần Hưng Đạo", CityId = cityMapSeed["Hà Nội"], WardId = wardMapSeed["Hà Nội"]["Phường Hàng Bạc"], CreatedDate = DateTime.Now.AddDays(-25) },
+                new User { Email = "customer3@gmail.com", FullName = "Lê Văn C", PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0934567890", Address = "12 Pasteur", CityId = cityMapSeed["Đà Nẵng"], WardId = wardMapSeed["Đà Nẵng"]["Phường Thạch Thang"], CreatedDate = DateTime.Now.AddDays(-20) },
+                new User { Email = "customer4@gmail.com", FullName = "Phạm Thị D", PasswordHash = hasher.HashPassword("Customer@123"), Role = "Customer", PhoneNumber = "0945678901", Address = "56 Điện Biên Phủ", CityId = cityMapSeed["Cần Thơ"], WardId = wardMapSeed["Cần Thơ"]["Phường An Cư"], CreatedDate = DateTime.Now.AddDays(-15) },
             };
             context.Users.AddRange(users);
 

@@ -46,11 +46,11 @@
                     </tr>
                     <tr>
                         <td class="text-muted">Thành phố</td>
-                        <td>@(Model.City ?? "—")</td>
+                        <td>@(Model.City?.CityName ?? "—")</td>
                     </tr>
                     <tr>
                         <td class="text-muted">Phường/Xã</td>
-                        <td>@(Model.Ward ?? "—")</td>
+                        <td>@(Model.Ward?.WardName ?? "—")</td>
                     </tr>
                     <tr>
                         <td class="text-muted">Role</td>
