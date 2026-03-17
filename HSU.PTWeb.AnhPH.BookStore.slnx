@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="../BookStore.Playwright/BookStore.Playwright.csproj" Id="31bc4555-9933-4451-a062-e29aa9d7d0d1" />
   <Project Path="../BookStore.Tests.csproj/BookStore.Tests.csproj" Id="d1c71fca-08ef-42d4-979e-97e3a96e6bc0" />
   <Project Path="HSU.PTWeb.AnhPH.BookStore.csproj" />
 </Solution>

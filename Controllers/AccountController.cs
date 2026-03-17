@@ -53,8 +53,9 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
         }
 
         // Hiển thị form đăng ký
-        public async Task<IActionResult> Register()
+        public async Task<IActionResult> Register(string returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
             await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
             return View();
         }
@@ -62,10 +63,11 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
         // Xử lý đăng ký người dùng mới
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model, string returnUrl = null)
         {
             if (!ModelState.IsValid)
             {
+                ViewData["ReturnUrl"] = returnUrl;
                 await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
                 return View(model);
             }
@@ -74,6 +76,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             if (await _context.Users.AnyAsync(u => u.Email == model.UserName))
             {
                 ModelState.AddModelError("", "Email đã được sử dụng, vui lòng chọn email khác");
+                ViewData["ReturnUrl"] = returnUrl;
                 await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
                 return View(model);
             }
@@ -83,6 +86,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             if (selectedCity == null)
             {
                 ModelState.AddModelError(nameof(model.CityId), "Tỉnh/Thành phố không hợp lệ");
+                ViewData["ReturnUrl"] = returnUrl;
                 await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
                 return View(model);
             }
@@ -92,6 +96,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             if (selectedWard == null || selectedWard.CityId != selectedCity.CityId)
             {
                 ModelState.AddModelError(nameof(model.WardId), "Phường/Xã không hợp lệ");
+                ViewData["ReturnUrl"] = returnUrl;
                 await LoadAddressSelectDataAsync("RegisterCities", "RegisterWardByCityJson");
                 return View(model);
             }
@@ -113,7 +118,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
-            return RedirectToAction("Login");
+            return RedirectToAction("Login", new { returnUrl });
         }
 
         // Hiển thị form đăng nhập

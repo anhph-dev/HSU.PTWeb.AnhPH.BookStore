@@ -13,8 +13,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Helpers
         public static T GetObject<T>(ISession session, string key)
         {
             var data = session.GetString(key);
-            if (string.IsNullOrWhiteSpace(data)) return default;
-            return JsonSerializer.Deserialize<T>(data);
+            return string.IsNullOrWhiteSpace(data) ? default(T) : JsonSerializer.Deserialize<T>(data);
         }
 
         // Alias for compatibility

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * Unobtrusive validation support library for jQuery and jQuery Validate
  * Copyright (c) .NET Foundation. All rights reserved.
@@ -75,7 +75,8 @@
 
         if (list && list.length && validator.errorList.length) {
             list.empty();
-            container.addClass("validation-summary-errors").removeClass("validation-summary-valid");
+            container.addClass("
+").removeClass("validation - summary - valid");
 
             $.each(validator.errorList, function () {
                 $("<li />").html(this.message).appendTo(list);

@@ -8,6 +8,8 @@
 
 <form asp-area="Admin" asp-controller="Products" asp-action="Create" method="post" enctype="multipart/form-data">
     <div class="row">
+        <div asp-validation-summary="All" class="alert alert-danger mb-3"
+             style="display:none" id="validationSummary"></div>
         <!-- THÔNG TIN CƠ BẢN -->
         <div class="col-md-8">
             <div class="card mb-3">
@@ -114,7 +116,8 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label asp-for="Price" class="form-label">Giá bán <span class="text-danger">*</span></label>
-                            <input asp-for="Price" type="number" class="form-control" min="0" step="1000" required placeholder="120000" />
+
+                            <input asp-for="Price" type="number" class="form-control" min="0" required placeholder="120000" />
                             <span asp-validation-for="Price" class="text-danger"></span>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -161,7 +164,8 @@
 
                     <div id="imagePreview" class="text-center d-none">
                         <p class="text-muted">Xem trước:</p>
-                        <img id="preview" src="#" alt="Preview" class="img-fluid" style="max-height: 300px; border: 1px solid #ddd; padding: 5px;" />
+                        <img id="preview" src="#" alt="Preview" class="img-fluid"
+                             style="max-height: 300px; border: 1px solid #ddd; padding: 5px;" />
                     </div>
                 </div>
             </div>
@@ -214,17 +218,26 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var summary = document.getElementById('validationSummary');
+            if (!summary) return;
+            // FIX: check class thay vì li count vì jquery.validate có thể can thiệp
+            // "validation-summary-errors" được ASP.NET thêm khi có lỗi server-side
+            if (summary.classList.contains('validation-summary-errors')) {
+                summary.style.display = 'block';
+                // Đặt !important để không bị jquery.validate override
+                summary.setAttribute('style', 'display:block !important');
+            }
+        });
+
         document.getElementById('imageFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                // Kiểm tra kích thước
                 if (file.size > 5 * 1024 * 1024) {
                     alert('Kích thước file quá lớn! Vui lòng chọn file nhỏ hơn 5MB.');
                     this.value = '';
                     return;
                 }
-
-                // Hiển thị preview
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('preview').src = e.target.result;

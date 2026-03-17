@@ -124,9 +124,11 @@
                         </li>
                         <hr class="mx-3 my-3" />
                         <li class="nav-item">
-                            <a class="nav-link text-danger d-flex align-items-center" asp-area="" asp-controller="Account" asp-action="Logout">
-                                <span class="material-symbols-outlined me-2">logout</span> Đăng xuất
-                            </a>
+                            <form method="post" asp-area="" asp-controller="Account" asp-action="Logout" class="d-inline w-100">
+                                <button type="submit" class="nav-link text-danger d-flex align-items-center bg-transparent border-0 w-100 text-start">
+                                    <span class="material-symbols-outlined me-2">logout</span> Đăng xuất
+                                </button>
+                            </form>
                         </li>
                     </ul>
                 </div>

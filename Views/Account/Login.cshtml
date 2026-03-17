@@ -68,7 +68,7 @@
                 </div>
                 <div class="card-footer bg-light text-center py-3 border-top-0 rounded-bottom-3">
                     <span class="text-muted">Chưa có tài khoản?</span>
-                    <a asp-action="Register" class="text-decoration-none fw-semibold">Đăng ký ngay</a>
+                    <a asp-action="Register" asp-route-returnUrl="@(ViewData["ReturnUrl"])" class="text-decoration-none fw-semibold">Đăng ký ngay</a>
                 </div>
             </div>
         </div>

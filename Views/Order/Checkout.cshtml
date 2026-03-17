@@ -148,28 +148,43 @@ else
 }
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script>
         const wardByCity = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(wardByCityData));
 
         const citySelect = document.getElementById('citySelect');
         const wardSelect = document.getElementById('wardSelect');
 
-        function bindWards() {
-            const selectedCity = citySelect.value;
-            const currentWard = '@(Model?.Ward ?? "")';
+        // Giá trị pre-filled từ profile user (Razor render trước)
+        const preselectedWard = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.Ward ?? ""));
 
+        function bindWards(targetWard) {
+            const selectedCity = citySelect.value;
             wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+
             if (!selectedCity || !wardByCity[selectedCity]) return;
 
-            wardByCity[selectedCity].forEach(w => {
+            wardByCity[selectedCity].forEach(function(w) {
                 const opt = document.createElement('option');
                 opt.value = w;
                 opt.textContent = w;
-                if (currentWard === w) opt.selected = true;
+                if (w === targetWard) opt.selected = true;
                 wardSelect.appendChild(opt);
             });
         }
+
+        // Khi user đổi city → reset ward về trống
+        citySelect.addEventListener('change', function() {
+            bindWards('');
+        });
+
+        // Khi page load → bind ward từ profile user
+        // DOMContentLoaded đảm bảo asp-for đã set citySelect.value
+        document.addEventListener('DOMContentLoaded', function() {
+            bindWards(preselectedWard);
+        });
 
         document.getElementById('btnPlaceOrder')?.addEventListener('click', function () {
             const form = document.getElementById('checkoutForm');
@@ -180,8 +195,5 @@ else
                 form.submit();
             }
         });
-
-        citySelect.addEventListener('change', bindWards);
-        bindWards();
     </script>
 }
