@@ -65,5 +65,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+
+        public ICollection<Order> AppOrders { get; set; } = new List<Order>();
     }
 }

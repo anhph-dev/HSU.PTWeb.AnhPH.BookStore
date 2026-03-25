@@ -20,7 +20,10 @@ namespace HSU.PTWeb.AnhPH.BookStore.Areas.Admin.Controllers
         // GET: Admin/Orders
         public async Task<IActionResult> Index(string search, string status, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = DefaultPageSize)
         {
-            var query = _context.Orders.Include(o => o.User).AsQueryable();
+            var query = _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.AppUser)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -69,6 +72,9 @@ namespace HSU.PTWeb.AnhPH.BookStore.Areas.Admin.Controllers
         {
             var order = await _context.Orders
                 .Include(o => o.User)
+                .Include(o => o.AppUser)
+                .Include(o => o.CityNavigation)
+                .Include(o => o.WardNavigation)
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
                 .FirstOrDefaultAsync(o => o.OrderId == id);
@@ -92,7 +98,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Areas.Admin.Controllers
 
             order.Status = status;
             await _context.SaveChangesAsync();
-            
+
             TempData["Success"] = $"Đã cập nhật trạng thái đơn hàng #{orderId} thành '{status}'";
             return RedirectToAction(nameof(Index));
         }

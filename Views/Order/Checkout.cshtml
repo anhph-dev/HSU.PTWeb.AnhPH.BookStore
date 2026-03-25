@@ -1,11 +1,11 @@
 ﻿@model HSU.PTWeb.AnhPH.BookStore.ViewModels.CheckoutViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     ViewData["Title"] = "Thanh toán";
     var cart = ViewBag.Cart as List<HSU.PTWeb.AnhPH.BookStore.Models.CartItem> ?? new List<HSU.PTWeb.AnhPH.BookStore.Models.CartItem>();
     var total = ViewBag.Total != null ? (decimal)ViewBag.Total : 0;
-    var cities = ViewBag.Cities as List<string> ?? new List<string>();
-    var wardByCityData = ViewBag.WardByCity as Dictionary<string, List<string>> ?? new Dictionary<string, List<string>>();
+    var cities = ViewBag.Cities as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
 <div class="row mb-4">
@@ -24,7 +24,7 @@
 @if (!cart.Any())
 {
     <div class="alert alert-info">
-        <i class="bi bi-cart-x"></i> Giỏ hàng của bạn đang trống. 
+        <i class="bi bi-cart-x"></i> Giỏ hàng của bạn đang trống.
     </div>
     <a asp-controller="Product" asp-action="Index" class="btn btn-primary">
         <i class="bi bi-shop"></i> Tiếp tục mua sắm
@@ -33,7 +33,6 @@
 else
 {
     <div class="row">
-        <!-- FORM ĐIỀN THÔNG TIN GIAO HÀNG -->
         <div class="col-md-7 mb-4">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white border-bottom py-3">
@@ -60,22 +59,22 @@ else
                                 <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
                             </div>
                             <div class="col-md-12">
-                                <label asp-for="City" class="form-label">Tỉnh / Thành phố <span class="text-danger">*</span></label>
-                                <select asp-for="City" class="form-select" id="citySelect" required>
+                                <label asp-for="CityId" class="form-label">Tỉnh / Thành phố <span class="text-danger">*</span></label>
+                                <select asp-for="CityId" class="form-select" id="citySelect" required>
                                     <option value="">-- Chọn Tỉnh/Thành phố --</option>
                                     @foreach (var city in cities)
                                     {
-                                        <option value="@city">@city</option>
+                                        <option value="@city.Value">@city.Text</option>
                                     }
                                 </select>
-                                <span asp-validation-for="City" class="text-danger small"></span>
+                                <span asp-validation-for="CityId" class="text-danger small"></span>
                             </div>
                             <div class="col-md-12">
-                                <label asp-for="Ward" class="form-label">Phường / Xã <span class="text-danger">*</span></label>
-                                <select asp-for="Ward" class="form-select" id="wardSelect" required>
+                                <label asp-for="WardId" class="form-label">Phường / Xã <span class="text-danger">*</span></label>
+                                <select asp-for="WardId" class="form-select" id="wardSelect" required disabled>
                                     <option value="">-- Chọn Phường/Xã --</option>
                                 </select>
-                                <span asp-validation-for="Ward" class="text-danger small"></span>
+                                <span asp-validation-for="WardId" class="text-danger small"></span>
                             </div>
                             <div class="col-md-12">
                                 <label asp-for="ShippingAddress" class="form-label">Địa chỉ giao hàng (Số nhà, Đường) <span class="text-danger">*</span></label>
@@ -100,7 +99,6 @@ else
             </div>
         </div>
 
-        <!-- TÓM TẮT ĐƠN HÀNG -->
         <div class="col-md-5">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white border-bottom py-3">
@@ -113,9 +111,9 @@ else
                             var lineTotal = item.Price * item.Quantity;
                             <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                                 <div class="d-flex align-items-center">
-                                    <img src="~/images/@(item.ImageUrl ?? "products/placeholder.svg")" 
-                                         style="width:50px;height:50px;object-fit:cover;" 
-                                         class="me-3 rounded shadow-sm" 
+                                    <img src="~/images/@(item.ImageUrl ?? "products/placeholder.svg")"
+                                         style="width:50px;height:50px;object-fit:cover;"
+                                         class="me-3 rounded shadow-sm"
                                          onerror="this.src='/images/products/placeholder.svg'" />
                                     <div>
                                         <h6 class="mb-0 text-truncate" style="max-width: 180px;" title="@item.ProductName">@item.ProductName</h6>
@@ -132,7 +130,7 @@ else
                         <span class="fs-5 text-muted">Tổng cộng:</span>
                         <span class="fs-4 fw-bold text-danger">@total.ToString("N0") VNĐ</span>
                     </div>
-                    
+
                     <div class="d-grid gap-2">
                         <button type="button" id="btnPlaceOrder" class="btn btn-success btn-lg">
                             <i class="bi bi-check-circle me-1"></i> Xác nhận đặt hàng
@@ -148,42 +146,52 @@ else
 }
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
-        const wardByCity = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(wardByCityData));
-
         const citySelect = document.getElementById('citySelect');
         const wardSelect = document.getElementById('wardSelect');
 
-        // Giá trị pre-filled từ profile user (Razor render trước)
-        const preselectedWard = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.Ward ?? ""));
+        const preselectedCity = '@(Model?.CityId?.ToString() ?? "")';
+        const preselectedWard = '@(Model?.WardId?.ToString() ?? "")';
 
-        function bindWards(targetWard) {
-            const selectedCity = citySelect.value;
+        async function loadWards(cityId, selectedWard) {
             wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            wardSelect.disabled = true;
 
-            if (!selectedCity || !wardByCity[selectedCity]) return;
+            if (!cityId) {
+                return;
+            }
 
-            wardByCity[selectedCity].forEach(function(w) {
-                const opt = document.createElement('option');
-                opt.value = w;
-                opt.textContent = w;
-                if (w === targetWard) opt.selected = true;
-                wardSelect.appendChild(opt);
-            });
+            try {
+                const response = await fetch('@Url.Action("GetWardsByCity", "Order")?cityId=' + cityId);
+                if (!response.ok) return;
+
+                const wards = await response.json();
+                wards.forEach(w => {
+                    const opt = document.createElement('option');
+                    opt.value = w.wardId;
+                    opt.textContent = w.wardName;
+                    if (String(w.wardId) === String(selectedWard)) {
+                        opt.selected = true;
+                    }
+                    wardSelect.appendChild(opt);
+                });
+
+                wardSelect.disabled = false;
+            } catch {
+                wardSelect.disabled = true;
+            }
         }
 
-        // Khi user đổi city → reset ward về trống
-        citySelect.addEventListener('change', function() {
-            bindWards('');
+        citySelect.addEventListener('change', function () {
+            loadWards(citySelect.value, '');
         });
 
-        // Khi page load → bind ward từ profile user
-        // DOMContentLoaded đảm bảo asp-for đã set citySelect.value
-        document.addEventListener('DOMContentLoaded', function() {
-            bindWards(preselectedWard);
+        document.addEventListener('DOMContentLoaded', function () {
+            if (preselectedCity) {
+                citySelect.value = preselectedCity;
+                loadWards(preselectedCity, preselectedWard);
+            }
         });
 
         document.getElementById('btnPlaceOrder')?.addEventListener('click', function () {

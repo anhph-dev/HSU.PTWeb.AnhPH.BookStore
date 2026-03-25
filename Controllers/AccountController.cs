@@ -52,6 +52,23 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             ViewData[wardJsonBagName] = System.Text.Json.JsonSerializer.Serialize(wardByCity);
         }
 
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetWardsByCity(int cityId)
+        {
+            var wards = await _context.Wards
+                .Where(w => w.CityId == cityId && w.IsActive)
+                .OrderBy(w => w.WardName)
+                .Select(w => new
+                {
+                    wardId = w.WardId,
+                    wardName = w.WardName
+                })
+                .ToListAsync();
+
+            return Json(wards);
+        }
+
         // Hiển thị form đăng ký
         public async Task<IActionResult> Register(string returnUrl = null)
         {

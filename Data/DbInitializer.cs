@@ -74,9 +74,22 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
                 var existingOrders = context.Orders.ToList();
                 foreach (var o in existingOrders)
                 {
-                    if (string.IsNullOrWhiteSpace(o.Ward) && !string.IsNullOrWhiteSpace(o.City) && wardByCity.TryGetValue(o.City, out var wards) && wards.Length > 0)
+                    if (!o.CityId.HasValue)
                     {
-                        o.Ward = wards[0];
+                        var defaultCityId = cityMap.Values.FirstOrDefault();
+                        if (defaultCityId > 0)
+                        {
+                            o.CityId = defaultCityId;
+                        }
+                    }
+
+                    if (!o.WardId.HasValue && o.CityId.HasValue && wardMap.TryGetValue(o.CityId.Value, out var wardsOfCity))
+                    {
+                        var defaultWardId = wardsOfCity.Values.FirstOrDefault();
+                        if (defaultWardId > 0)
+                        {
+                            o.WardId = defaultWardId;
+                        }
                     }
                 }
 
@@ -133,7 +146,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             {
                 // -- Văn học nước ngoài --
                 new Product { ProductName = "Nhà Giả Kim",                    Author = "Paulo Coelho",               ISBN = "9786042148393", Publisher = "NXB Hội Nhà Văn",       PublicationYear = 2020, Language = "Tiếng Việt", PageCount = 256, CoverType = "Bìa mềm", Weight = 300, Price = 120000, OriginalPrice = 150000, DiscountPercent = 20, Stock = 50, SoldCount = 234, ShortDescription = "Tác phẩm kinh điển về hành trình tìm kiếm ước mơ",         Category = foreign, ImageUrl = "products/nha-gia-kim.jpg",          IsFeatured = true,  IsBestSeller = true,  IsAvailable = true, AverageRating = 4.8m, ReviewCount = 1250 },
-                new Product { ProductName = "Cây Cam Ngọt Của Tôi",           Author = "José Mauro de Vasconcelos",  ISBN = "9786042271667", Publisher = "NXB Hội Nhà Văn",       PublicationYear = 2019, Language = "Tiếng Việt", PageCount = 244, CoverType = "Bìa mềm", Weight = 280, Price = 108000, OriginalPrice = 140000, DiscountPercent = 23, Stock = 35, SoldCount = 456, ShortDescription = "Câu chuyện cảm động về tuổi thơ nghèo khó",                Category = foreign, ImageUrl = "products/cay-cam-ngot.jpg",         IsFeatured = true,  IsBestSeller = true,  IsAvailable = true, AverageRating = 4.9m, ReviewCount = 2340 },
+                new Product { ProductName = "C cây Cam Ngọt Của Tôi",           Author = "José Mauro de Vasconcelos",  ISBN = "9786042271667", Publisher = "NXB Hội Nhà Văn",       PublicationYear = 2019, Language = "Tiếng Việt", PageCount = 244, CoverType = "Bìa mềm", Weight = 280, Price = 108000, OriginalPrice = 140000, DiscountPercent = 23, Stock = 35, SoldCount = 456, ShortDescription = "Câu chuyện cảm động về tuổi thơ nghèo khó",                Category = foreign, ImageUrl = "products/cay-cam-ngot.jpg",         IsFeatured = true,  IsBestSeller = true,  IsAvailable = true, AverageRating = 4.9m, ReviewCount = 2340 },
                 new Product { ProductName = "Harry Potter và Hòn Đá Phù Thủy",Author = "J.K. Rowling",               ISBN = "9786041234567", Publisher = "NXB Trẻ",               PublicationYear = 2021, Language = "Tiếng Việt", PageCount = 352, CoverType = "Bìa mềm", Weight = 380, Price = 145000, OriginalPrice = 165000, DiscountPercent = 12, Stock = 60, SoldCount = 890, ShortDescription = "Tập 1 của bộ truyện Harry Potter huyền thoại",          Category = foreign, ImageUrl = "products/placeholder.svg",          IsFeatured = true,  IsBestSeller = true,  IsNewArrival = true, IsAvailable = true, AverageRating = 4.9m, ReviewCount = 3456 },
                 new Product { ProductName = "Rừng Nauy",                       Author = "Haruki Murakami",            ISBN = "9786042456789", Publisher = "NXB Hội Nhà Văn",       PublicationYear = 2019, Language = "Tiếng Việt", PageCount = 448, CoverType = "Bìa mềm", Weight = 470, Price = 145000, OriginalPrice = 168000, DiscountPercent = 14, Stock = 28, SoldCount = 567, ShortDescription = "Tiểu thuyết tình cảm nổi tiếng của Murakami",          Category = foreign, ImageUrl = "products/placeholder.svg",          IsFeatured = true,  IsAvailable = true, AverageRating = 4.7m, ReviewCount = 789 },
                 new Product { ProductName = "Totto-chan - Cô Bé Bên Cửa Sổ",  Author = "Tetsuko Kuroyanagi",         ISBN = "9786042345001", Publisher = "NXB Hội Nhà Văn",       PublicationYear = 2018, Language = "Tiếng Việt", PageCount = 276, CoverType = "Bìa mềm", Weight = 270, Price = 78000,  OriginalPrice = 92000,  DiscountPercent = 15, Stock = 55, SoldCount = 678, ShortDescription = "Hồi ức tuổi thơ Nhật Bản",                              Category = foreign, ImageUrl = "products/placeholder.svg",          IsAvailable = true, AverageRating = 4.8m, ReviewCount = 789 },
@@ -154,7 +167,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
                 // -- Thiếu nhi --
                 new Product { ProductName = "Dế Mèn Phiêu Lưu Ký",           Author = "Tô Hoài",                   ISBN = "9786041098762", Publisher = "NXB Kim Đồng",           PublicationYear = 2020, Language = "Tiếng Việt", PageCount = 200, CoverType = "Bìa mềm", Weight = 220, Price = 75000,  OriginalPrice = null,   DiscountPercent = null, Stock = 80, SoldCount = 456,  ShortDescription = "Văn học thiếu nhi kinh điển Việt Nam",                Category = child,   ImageUrl = "products/de-men.svg",               IsBestSeller = true, IsAvailable = true, AverageRating = 5.0m, ReviewCount = 890 },
                 new Product { ProductName = "Hoàng Tử Bé",                    Author = "Antoine de Saint-Exupéry",  ISBN = "9786042234567", Publisher = "NXB Trẻ",               PublicationYear = 2021, Language = "Tiếng Việt", PageCount = 128, CoverType = "Bìa cứng", Weight = 250, Price = 96000,  OriginalPrice = 120000, DiscountPercent = 20, Stock = 60, SoldCount = 678,  ShortDescription = "Tác phẩm thiếu nhi kinh điển thế giới",               Category = child,   ImageUrl = "products/hoang-tu-be.svg",          IsFeatured = true,  IsBestSeller = true,  IsAvailable = true, AverageRating = 4.9m, ReviewCount = 1234 },
-                new Product { ProductName = "Đảo Giấu Vàng",                  Author = "Robert Louis Stevenson",    ISBN = "9786041345678", Publisher = "NXB Kim Đồng",           PublicationYear = 2020, Language = "Tiếng Việt", PageCount = 312, CoverType = "Bìa mềm", Weight = 320, Price = 88000,  OriginalPrice = 98000,  DiscountPercent = 10, Stock = 45, SoldCount = 234,  ShortDescription = "Phiêu lưu mạo hiểm tìm kho báu",                      Category = child,   ImageUrl = "products/placeholder.svg",          IsAvailable = true, AverageRating = 4.6m, ReviewCount = 456 },
+                new Product { ProductName = "Đ đảo Giấu Vàng",                  Author = "Robert Louis Stevenson",    ISBN = "9786041345678", Publisher = "NXB Kim Đồng",           PublicationYear = 2020, Language = "Tiếng Việt", PageCount = 312, CoverType = "Bìa mềm", Weight = 320, Price = 88000,  OriginalPrice = 98000,  DiscountPercent = 10, Stock = 45, SoldCount = 234,  ShortDescription = "Phiêu lưu mạo hiểm tìm kho báu",                      Category = child,   ImageUrl = "products/placeholder.svg",          IsAvailable = true, AverageRating = 4.6m, ReviewCount = 456 },
 
                 // -- Kinh tế - Kinh doanh --
                 new Product { ProductName = "Khởi Nghiệp Tinh Gọn",          Author = "Eric Ries",                  ISBN = "9786042214580", Publisher = "NXB Thế Giới",          PublicationYear = 2020, Language = "Tiếng Việt", PageCount = 320, CoverType = "Bìa mềm", Weight = 340, Price = 165000, OriginalPrice = null,   DiscountPercent = null, Stock = 40, SoldCount = 234,  ShortDescription = "Phương pháp khởi nghiệp hiệu quả hiện đại",           Category = biz,     ImageUrl = "products/khoi-nghiep-tinh-gon.jpg", IsAvailable = true, AverageRating = 4.5m, ReviewCount = 234 },
@@ -185,7 +198,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             var rnd       = new Random(42); // fixed seed for reproducible data
             var customers = users.Where(u => u.Role == "Customer").ToList();
             var allProds  = products;
-            var statuses  = new[] { "Pending", "Processing", "Shipped", "Completed", "Cancelled" };
+            var statuses  = new[] { "Pending", "Confirmed", "Shipping", "Completed", "Cancelled" };
             var payments  = new[] { "COD", "BankTransfer", "VNPay" };
             var cities = wardByCity.Keys.ToArray();
 
@@ -195,29 +208,34 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
                 var orderDate = DateTime.Now.AddDays(-rnd.Next(0, 90)).AddHours(-rnd.Next(0, 24));
                 var daysAgo   = (DateTime.Now - orderDate).TotalDays;
                 
-                var status = daysAgo > 14 ? statuses[rnd.Next(2, 5)]  // older → more likely completed/cancelled
+                var status = daysAgo > 14 ? statuses[rnd.Next(2, 5)]
                            : daysAgo > 3  ? statuses[rnd.Next(0, 4)]
                            :                statuses[rnd.Next(0, 3)];
 
-                var paymentStatus = status == "Completed" || status == "Shipped" ? "Paid"
+                var paymentStatus = status == "Completed" || status == "Shipping" ? "Paid"
                                   : status == "Cancelled" ? "Failed"
                                   : "Pending";
 
                 var payMethod = payments[rnd.Next(payments.Length)];
-                var city      = cities[rnd.Next(cities.Length)];
-                var wards     = wardByCity[city];
+                var city = cities[rnd.Next(cities.Length)];
+                var wards = wardByCity[city];
+
+                var channel = rnd.Next(100) < 20 ? "Phone" : "Online";
+                var appUserId = channel == "Phone" ? users.First(u => u.Role == "Admin").UserId : (int?)null;
 
                 var order = new Order
                 {
                     UserId        = customer.UserId,
+                    AppUserId     = appUserId,
                     OrderDate     = orderDate,
                     Status        = status,
                     RecipientName = customer.FullName,
                     PhoneNumber   = customer.PhoneNumber,
                     Email         = customer.Email,
                     ShippingAddress = $"{rnd.Next(1, 200)} Đường Nguyễn Văn Cừ",
-                    City          = city,
-                    Ward          = wards[rnd.Next(wards.Length)],
+                    CityId        = cityMapSeed[city],
+                    WardId        = wardMapSeed[city][wards[rnd.Next(wards.Length)]],
+                    Channel       = channel,
                     Notes         = rnd.Next(2) == 0 ? "Giao giờ hành chính" : "",
                     PaymentMethod = payMethod,
                     PaymentStatus = paymentStatus,

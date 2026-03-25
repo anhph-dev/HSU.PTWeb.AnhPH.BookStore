@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Thông tin cá nhân";
     var cities = ViewData["ProfileCities"] as List<SelectListItem> ?? new List<SelectListItem>();
-    var wardByCityJson = ViewData["ProfileWardByCityJson"] as string ?? "{}";
 }
 
 <div class="container">
@@ -70,7 +69,7 @@
 
                         <div class="mb-3">
                             <label asp-for="WardId" class="form-label fw-bold"></label>
-                            <select asp-for="WardId" class="form-select" id="wardSelect">
+                            <select asp-for="WardId" class="form-select" id="wardSelect" disabled>
                                 <option value="">-- Chọn Phường/Xã --</option>
                             </select>
                             <span asp-validation-for="WardId" class="text-danger small"></span>
@@ -138,28 +137,50 @@
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
-        const wardByCity = @Html.Raw(wardByCityJson);
-
         const citySelect = document.getElementById('citySelect');
         const wardSelect = document.getElementById('wardSelect');
 
-        function bindWards() {
-            const selectedCity = Number(citySelect.value);
-            const currentWard = '@(Model?.WardId?.ToString() ?? "")';
+        const currentCityId = '@(Model?.CityId?.ToString() ?? "")';
+        const currentWardId = '@(Model?.WardId?.ToString() ?? "")';
 
+        async function loadWards(cityId, selectedWard) {
             wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-            if (!selectedCity || !wardByCity[selectedCity]) return;
+            wardSelect.disabled = true;
 
-            wardByCity[selectedCity].forEach(w => {
-                const opt = document.createElement('option');
-                opt.value = w.value;
-                opt.textContent = w.text;
-                if (currentWard === String(w.value)) opt.selected = true;
-                wardSelect.appendChild(opt);
-            });
+            if (!cityId) {
+                return;
+            }
+
+            try {
+                const response = await fetch('@Url.Action("GetWardsByCity", "Account")?cityId=' + cityId);
+                if (!response.ok) return;
+
+                const wards = await response.json();
+                wards.forEach(w => {
+                    const opt = document.createElement('option');
+                    opt.value = w.wardId;
+                    opt.textContent = w.wardName;
+                    if (String(w.wardId) === String(selectedWard)) {
+                        opt.selected = true;
+                    }
+                    wardSelect.appendChild(opt);
+                });
+
+                wardSelect.disabled = false;
+            } catch {
+                wardSelect.disabled = true;
+            }
         }
 
-        citySelect.addEventListener('change', bindWards);
-        bindWards();
+        citySelect.addEventListener('change', function () {
+            loadWards(citySelect.value, '');
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (currentCityId) {
+                citySelect.value = currentCityId;
+                loadWards(currentCityId, currentWardId);
+            }
+        });
     </script>
 }

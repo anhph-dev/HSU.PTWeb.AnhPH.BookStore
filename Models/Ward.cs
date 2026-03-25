@@ -20,5 +20,9 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
 
         [ForeignKey(nameof(CityId))]
         public City City { get; set; }
+
+        public ICollection<User> Users { get; set; } = new List<User>();
+
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

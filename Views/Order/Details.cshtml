@@ -6,8 +6,8 @@
     var statusClass = Model.Status switch
     {
         "Completed" => "bg-success bg-opacity-10 text-success border border-success-subtle",
-        "Shipped" => "bg-info bg-opacity-10 text-info border border-info-subtle",
-        "Processing" => "bg-primary bg-opacity-10 text-primary border border-primary-subtle",
+        "Shipping" => "bg-secondary bg-opacity-10 text-secondary-emphasis border border-secondary-subtle",
+        "Confirmed" => "bg-primary bg-opacity-10 text-primary border border-primary-subtle",
         "Pending" => "bg-warning bg-opacity-10 text-warning-emphasis border border-warning-subtle",
         "Cancelled" => "bg-danger bg-opacity-10 text-danger border border-danger-subtle",
         _ => "bg-light text-dark border"
@@ -16,9 +16,9 @@
     var statusText = Model.Status switch
     {
         "Pending" => "Chờ xử lý",
-        "Processing" => "Đang xử lý",
-        "Shipped" => "Đang giao",
-        "Completed" => "Đã nhận",
+        "Confirmed" => "Đã xác nhận",
+        "Shipping" => "Đang giao",
+        "Completed" => "Đã hoàn thành",
         "Cancelled" => "Đã hủy",
         _ => Model.Status
     };

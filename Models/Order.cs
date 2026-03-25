@@ -15,8 +15,26 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         // Khóa ngoại tới User
         public int UserId { get; set; }
 
+        public int? AppUserId { get; set; }
+
+        [Display(Name = "Tỉnh/Thành phố")]
+        public int? CityId { get; set; }
+
+        [Display(Name = "Phường/Xã")]
+        public int? WardId { get; set; }
+
         // Navigation tới User
+        [ForeignKey(nameof(UserId))]
+        [InverseProperty(nameof(Models.User.Orders))]
         public User User { get; set; }
+
+        [ForeignKey(nameof(AppUserId))]
+        [InverseProperty(nameof(Models.User.AppOrders))]
+        public User? AppUser { get; set; }
+
+        public City? CityNavigation { get; set; }
+
+        public Ward? WardNavigation { get; set; }
 
         // Ngày đặt hàng
         [Display(Name = "Ngày đặt hàng")]
@@ -56,17 +74,31 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
         [Display(Name = "Địa chỉ giao hàng")]
         public string ShippingAddress { get; set; }
 
+        [NotMapped]
         [StringLength(100)]
         [Display(Name = "Tỉnh/Thành phố")]
-        public string City { get; set; }
+        public string City
+        {
+            get => CityNavigation?.CityName ?? string.Empty;
+            set { }
+        }
 
+        [NotMapped]
         [StringLength(100)]
         [Display(Name = "Phường/Xã")]
-        public string? Ward { get; set; }
+        public string? Ward
+        {
+            get => WardNavigation?.WardName;
+            set { }
+        }
 
         [StringLength(500)]
         [Display(Name = "Ghi chú")]
         public string? Notes { get; set; }
+
+        [StringLength(50)]
+        [Display(Name = "Kênh đặt hàng")]
+        public string Channel { get; set; } = "Online";
 
         // Payment Information
         [Required]

@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders; 
 using HSU.PTWeb.AnhPH.BookStore.Models;
 
 namespace HSU.PTWeb.AnhPH.BookStore.Data
@@ -19,6 +18,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<City> Cities { get; set; }
         public DbSet<Ward> Wards { get; set; }
+        //public DbSet<Supplier> Suppliers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,6 +32,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             modelBuilder.Entity<OrderDetail>().ToTable("OrderDetails");
             modelBuilder.Entity<City>().ToTable("Cities");
             modelBuilder.Entity<Ward>().ToTable("Wards");
+            //modelBuilder.Entity<Supplier>().ToTable("Suppliers");
 
             // Thiết lập khóa chính
             modelBuilder.Entity<User>().HasKey(u => u.UserId);
@@ -41,6 +42,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             modelBuilder.Entity<OrderDetail>().HasKey(od => od.OrderDetailId);
             modelBuilder.Entity<City>().HasKey(c => c.CityId);
             modelBuilder.Entity<Ward>().HasKey(w => w.WardId);
+            //modelBuilder.Entity<Supplier>().HasKey(s => s.SupplierId);
 
             // Quan hệ: Category 1 - n Product
             modelBuilder.Entity<Product>()
@@ -70,6 +72,27 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.AppUser)
+                .WithMany(u => u.AppOrders)
+                .HasForeignKey(o => o.AppUserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Orders_AppUser");
+
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.CityNavigation)
+                .WithMany(c => c.Orders)
+                .HasForeignKey(o => o.CityId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Orders_Cities");
+
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.WardNavigation)
+                .WithMany(w => w.Orders)
+                .HasForeignKey(o => o.WardId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Orders_Wards");
+
             // Quan hệ: City 1 - n Ward
             modelBuilder.Entity<Ward>()
                 .HasOne(w => w.City)
@@ -80,14 +103,14 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             // Quan hệ: City 1 - n User
             modelBuilder.Entity<User>()
                 .HasOne(u => u.City)
-                .WithMany()
+                .WithMany(c => c.Users)
                 .HasForeignKey(u => u.CityId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Quan hệ: Ward 1 - n User
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Ward)
-                .WithMany()
+                .WithMany(w => w.Users)
                 .HasForeignKey(u => u.WardId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -98,6 +121,26 @@ namespace HSU.PTWeb.AnhPH.BookStore.Data
             modelBuilder.Entity<Ward>()
                 .HasIndex(w => new { w.CityId, w.WardName })
                 .IsUnique();
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.AppUserId);
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.UserId);
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => new { o.Status, o.OrderDate })
+                .IsDescending(false, true);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.CityId);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.WardId);
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.Channel)
+                .HasDefaultValue("Online");
 
             // Thiết lập giá trị mặc định cho CreatedDate
             modelBuilder.Entity<User>()

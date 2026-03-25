@@ -1,12 +1,12 @@
 ﻿@model List<HSU.PTWeb.AnhPH.BookStore.ViewModels.OrderListItemViewModel>
 @{
     ViewData["Title"] = "Đơn hàng của tôi";
-    var currentPage   = (int)(ViewData["Page"] ?? 1);
-    var totalPages    = (int)(ViewData["TotalPages"] ?? 1);
+    var currentPage = (int)(ViewData["Page"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
     var currentStatus = ViewData["Status"] as string ?? "";
-    var fromDate      = ViewData["FromDate"] as string ?? "";
-    var toDate        = ViewData["ToDate"] as string ?? "";
-    var statuses      = new[] { "Pending", "Processing", "Shipped", "Completed", "Cancelled" };
+    var fromDate = ViewData["FromDate"] as string ?? "";
+    var toDate = ViewData["ToDate"] as string ?? "";
+    var statuses = new[] { "Pending", "Confirmed", "Shipping", "Completed", "Cancelled" };
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
@@ -26,10 +26,11 @@
                     <option value="">Tất cả trạng thái</option>
                     @foreach (var s in statuses)
                     {
-                        var displayStatus = s switch {
+                        var displayStatus = s switch
+                        {
                             "Pending" => "Chờ xử lý",
-                            "Processing" => "Đang xử lý",
-                            "Shipped" => "Đang giao hàng",
+                            "Confirmed" => "Đã xác nhận",
+                            "Shipping" => "Đang giao hàng",
                             "Completed" => "Đã hoàn thành",
                             "Cancelled" => "Đã hủy",
                             _ => s
@@ -86,19 +87,20 @@ else
                     {
                         var badgeClass = o.Status switch
                         {
-                            "Completed"  => "bg-success bg-opacity-10 text-success border border-success-subtle",
-                            "Shipped"    => "bg-info bg-opacity-10 text-info border border-info-subtle",
-                            "Processing" => "bg-primary bg-opacity-10 text-primary border border-primary-subtle",
-                            "Pending"    => "bg-warning bg-opacity-10 text-warning-emphasis border border-warning-subtle",
-                            "Cancelled"  => "bg-danger bg-opacity-10 text-danger border border-danger-subtle",
-                            _            => "bg-light text-dark border"
+                            "Completed" => "bg-success bg-opacity-10 text-success border border-success-subtle",
+                            "Shipping" => "bg-secondary bg-opacity-10 text-secondary-emphasis border border-secondary-subtle",
+                            "Confirmed" => "bg-primary bg-opacity-10 text-primary border border-primary-subtle",
+                            "Pending" => "bg-warning bg-opacity-10 text-warning-emphasis border border-warning-subtle",
+                            "Cancelled" => "bg-danger bg-opacity-10 text-danger border border-danger-subtle",
+                            _ => "bg-light text-dark border"
                         };
-                        
-                        var badgeText = o.Status switch {
+
+                        var badgeText = o.Status switch
+                        {
                             "Pending" => "Chờ xử lý",
-                            "Processing" => "Đang xử lý",
-                            "Shipped" => "Đang giao",
-                            "Completed" => "Đã nhận",
+                            "Confirmed" => "Đã xác nhận",
+                            "Shipping" => "Đang giao",
+                            "Completed" => "Đã hoàn thành",
                             "Cancelled" => "Đã hủy",
                             _ => o.Status
                         };
@@ -111,9 +113,7 @@ else
                                 <span class="text-muted"><i class="bi bi-calendar-event me-2"></i>@o.OrderDate.ToString("dd/MM/yyyy HH:mm")</span>
                             </td>
                             <td>
-                                <span class="badge rounded-pill px-3 py-2 @badgeClass">
-                                    @badgeText
-                                </span>
+                                <span class="badge rounded-pill px-3 py-2 @badgeClass">@badgeText</span>
                             </td>
                             <td>
                                 <span class="fw-bold text-danger fs-6">@o.TotalAmount.ToString("N0") đ</span>
@@ -128,7 +128,7 @@ else
                 </tbody>
             </table>
         </div>
-        
+
         @if (totalPages > 1)
         {
             <div class="card-footer bg-white border-top-0 pt-4 pb-3">

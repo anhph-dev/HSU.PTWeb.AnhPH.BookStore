@@ -13,6 +13,10 @@ namespace HSU.PTWeb.AnhPH.BookStore.Models
 
         public bool IsActive { get; set; } = true;
 
+        public ICollection<User> Users { get; set; } = new List<User>();
+
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
+
         public ICollection<Ward> Wards { get; set; } = new List<Ward>();
     }
 }

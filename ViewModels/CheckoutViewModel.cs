@@ -28,13 +28,17 @@ namespace HSU.PTWeb.AnhPH.BookStore.ViewModels
 
         [Required(ErrorMessage = "Vui lòng chọn Tỉnh/Thành phố")]
         [Display(Name = "Tỉnh/Thành phố")]
-        [StringLength(100)]
-        public string City { get; set; } = string.Empty;
+        public int? CityId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng chọn Phường/Xã")]
         [Display(Name = "Phường/Xã")]
-        [StringLength(100)]
-        public string Ward { get; set; } = string.Empty;
+        public int? WardId { get; set; }
+
+        [Display(Name = "Tỉnh/Thành phố")]
+        public string? City { get; set; }
+
+        [Display(Name = "Phường/Xã")]
+        public string? Ward { get; set; }
 
         [Display(Name = "Ghi chú")]
         [StringLength(500)]

@@ -5,6 +5,7 @@ using HSU.PTWeb.AnhPH.BookStore.Helpers;
 using HSU.PTWeb.AnhPH.BookStore.Models;
 using HSU.PTWeb.AnhPH.BookStore.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 
 namespace HSU.PTWeb.AnhPH.BookStore.Controllers
@@ -22,25 +23,35 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             _context = context;
         }
 
-        private async Task LoadAddressDataAsync()
+        private async Task LoadCheckoutAddressDataAsync()
         {
-            var cities = await _context.Cities
+            ViewBag.Cities = await _context.Cities
                 .Where(c => c.IsActive)
                 .OrderBy(c => c.CityName)
-                .Select(c => c.CityName)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CityId.ToString(),
+                    Text = c.CityName
+                })
                 .ToListAsync();
 
+            ViewBag.Wards = Enumerable.Empty<SelectListItem>();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetWardsByCity(int cityId)
+        {
             var wards = await _context.Wards
-                .Where(w => w.IsActive && w.City.IsActive)
-                .Select(w => new { w.City.CityName, w.WardName })
+                .Where(w => w.CityId == cityId && w.IsActive)
+                .OrderBy(w => w.WardName)
+                .Select(w => new
+                {
+                    wardId = w.WardId,
+                    wardName = w.WardName
+                })
                 .ToListAsync();
 
-            var wardByCity = wards
-                .GroupBy(x => x.CityName)
-                .ToDictionary(g => g.Key, g => g.Select(x => x.WardName).OrderBy(x => x).ToList());
-
-            ViewBag.Cities = cities;
-            ViewBag.WardByCity = wardByCity;
+            return Json(wards);
         }
 
         // Hiển thị trang Checkout - tự động điền thông tin từ profile user
@@ -56,7 +67,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
 
             // Lấy thông tin user để điền sẵn vào form
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            User dbUser = null;
+            User? dbUser = null;
             if (int.TryParse(userIdClaim, out var userId))
             {
                 dbUser = await _context.Users
@@ -67,18 +78,20 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
 
             var model = new CheckoutViewModel
             {
-                Email           = dbUser?.Email ?? User.FindFirstValue(ClaimTypes.Email) ?? "",
-                RecipientName   = dbUser?.FullName ?? User.FindFirstValue(ClaimTypes.Name) ?? "",
-                PhoneNumber     = dbUser?.PhoneNumber ?? "",
-                ShippingAddress = dbUser?.Address ?? "",
-                City            = dbUser?.City?.CityName ?? "",
-                Ward            = dbUser?.Ward?.WardName ?? "",
-                PaymentMethod   = "COD"
+                Email = dbUser?.Email ?? User.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
+                RecipientName = dbUser?.FullName ?? User.FindFirstValue(ClaimTypes.Name) ?? string.Empty,
+                PhoneNumber = dbUser?.PhoneNumber ?? string.Empty,
+                ShippingAddress = dbUser?.Address ?? string.Empty,
+                CityId = dbUser?.CityId,
+                WardId = dbUser?.WardId,
+                City = dbUser?.City?.CityName,
+                Ward = dbUser?.Ward?.WardName,
+                PaymentMethod = "COD"
             };
 
-            ViewBag.Cart  = cart;
+            ViewBag.Cart = cart;
             ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
-            await LoadAddressDataAsync();
+            await LoadCheckoutAddressDataAsync();
 
             return View(model);
         }
@@ -89,7 +102,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
             var cart = SessionHelper.GetObjectFromJson<List<CartItem>>(HttpContext.Session, CartSessionKey) ?? new List<CartItem>();
-            
+
             if (!cart.Any())
             {
                 TempData["ErrorMessage"] = "Giỏ hàng trống!";
@@ -100,31 +113,30 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             {
                 ViewBag.Cart = cart;
                 ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
-                await LoadAddressDataAsync();
+                await LoadCheckoutAddressDataAsync();
                 return View(model);
             }
 
-            // Validate stock availability
-            var errors = new List<string>();
-            foreach (var cartItem in cart)
+            // Validate city/ward
+            var selectedCity = await _context.Cities
+                .FirstOrDefaultAsync(c => c.CityId == model.CityId && c.IsActive);
+            if (selectedCity == null)
             {
-                var product = await _context.Products.FindAsync(cartItem.ProductId);
-                if (product == null)
-                {
-                    errors.Add($"Sản phẩm '{cartItem.ProductName}' không tồn tại.");
-                }
-                else if (product.Stock < cartItem.Quantity)
-                {
-                    errors.Add($"Sản phẩm '{cartItem.ProductName}' chỉ còn {product.Stock} trong kho (bạn đặt {cartItem.Quantity}).");
-                }
-            }
-
-            if (errors.Any())
-            {
-                TempData["ErrorMessage"] = string.Join("<br/>", errors);
+                ModelState.AddModelError(nameof(model.CityId), "Tỉnh/Thành phố không hợp lệ");
                 ViewBag.Cart = cart;
                 ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
-                await LoadAddressDataAsync();
+                await LoadCheckoutAddressDataAsync();
+                return View(model);
+            }
+
+            var selectedWard = await _context.Wards
+                .FirstOrDefaultAsync(w => w.WardId == model.WardId && w.IsActive);
+            if (selectedWard == null || selectedWard.CityId != selectedCity.CityId)
+            {
+                ModelState.AddModelError(nameof(model.WardId), "Phường/Xã không hợp lệ");
+                ViewBag.Cart = cart;
+                ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+                await LoadCheckoutAddressDataAsync();
                 return View(model);
             }
 
@@ -136,55 +148,94 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // Create order
-            var order = new Order
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            var createdOrderId = 0;
+            try
             {
-                UserId = userId,
-                OrderDate = DateTime.Now,
-                TotalAmount = cart.Sum(c => c.Price * c.Quantity),
-                Status = "Pending",
-                RecipientName = model.RecipientName,
-                PhoneNumber = model.PhoneNumber,
-                Email = model.Email,
-                ShippingAddress = model.ShippingAddress,
-                City = model.City,
-                Ward = model.Ward,
-                Notes = model.Notes ?? string.Empty,
-                PaymentMethod = model.PaymentMethod,
-                PaymentStatus = "Pending"
-            };
+                var productIds = cart.Select(x => x.ProductId).Distinct().ToList();
+                var products = await _context.Products
+                    .Where(p => productIds.Contains(p.ProductId))
+                    .ToDictionaryAsync(p => p.ProductId);
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-
-            // Create order details and update stock
-            foreach (var c in cart)
-            {
-                var detail = new OrderDetail
+                var errors = new List<string>();
+                foreach (var cartItem in cart)
                 {
-                    OrderId = order.OrderId,
-                    ProductId = c.ProductId,
-                    Quantity = c.Quantity,
-                    UnitPrice = c.Price
+                    if (!products.TryGetValue(cartItem.ProductId, out var product))
+                    {
+                        errors.Add($"Sản phẩm '{cartItem.ProductName}' không tồn tại.");
+                    }
+                    else if (product.Stock < cartItem.Quantity)
+                    {
+                        errors.Add($"Sản phẩm '{cartItem.ProductName}' chỉ còn {product.Stock} trong kho (bạn đặt {cartItem.Quantity}).");
+                    }
+                }
+
+                if (errors.Any())
+                {
+                    await tx.RollbackAsync();
+                    TempData["ErrorMessage"] = string.Join("<br/>", errors);
+                    ViewBag.Cart = cart;
+                    ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+                    await LoadCheckoutAddressDataAsync();
+                    return View(model);
+                }
+
+                var order = new Order
+                {
+                    UserId = userId,
+                    AppUserId = null,
+                    Channel = "Online",
+                    CityId = selectedCity.CityId,
+                    WardId = selectedWard.WardId,
+                    OrderDate = DateTime.Now,
+                    TotalAmount = cart.Sum(c => c.Price * c.Quantity),
+                    Status = "Pending",
+                    RecipientName = model.RecipientName,
+                    PhoneNumber = model.PhoneNumber,
+                    Email = model.Email,
+                    ShippingAddress = model.ShippingAddress,
+                    Notes = model.Notes ?? string.Empty,
+                    PaymentMethod = model.PaymentMethod,
+                    PaymentStatus = "Pending"
                 };
-                _context.OrderDetails.Add(detail);
 
-                // Deduct stock
-                var product = await _context.Products.FindAsync(c.ProductId);
-                if (product != null)
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
+                createdOrderId = order.OrderId;
+
+                foreach (var c in cart)
                 {
+                    _context.OrderDetails.Add(new OrderDetail
+                    {
+                        OrderId = order.OrderId,
+                        ProductId = c.ProductId,
+                        Quantity = c.Quantity,
+                        UnitPrice = c.Price
+                    });
+
+                    var product = products[c.ProductId];
                     product.Stock -= c.Quantity;
                     product.SoldCount += c.Quantity;
                 }
-            }
 
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                TempData["ErrorMessage"] = "Không thể tạo đơn hàng. Vui lòng thử lại.";
+                ViewBag.Cart = cart;
+                ViewBag.Total = cart.Sum(c => c.Price * c.Quantity);
+                await LoadCheckoutAddressDataAsync();
+                return View(model);
+            }
 
             // Clear cart
             HttpContext.Session.Remove(CartSessionKey);
 
             TempData["SuccessMessage"] = "Đặt hàng thành công! Cảm ơn bạn đã mua hàng.";
-            return RedirectToAction("Confirm", new { id = order.OrderId });
+            return RedirectToAction("Confirm", new { id = createdOrderId });
         }
 
         // Trang xác nhận đơn hàng
@@ -196,6 +247,8 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             var order = await _context.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
+                .Include(o => o.CityNavigation)
+                .Include(o => o.WardNavigation)
                 .FirstOrDefaultAsync(o => o.OrderId == id && o.UserId == userId);
 
             if (order == null) return NotFound();
@@ -264,6 +317,8 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
             var order = await _context.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
+                .Include(o => o.CityNavigation)
+                .Include(o => o.WardNavigation)
                 .FirstOrDefaultAsync(o => o.OrderId == id && o.UserId == userId);
 
             if (order == null) return NotFound();
@@ -278,8 +333,8 @@ namespace HSU.PTWeb.AnhPH.BookStore.Controllers
                 PhoneNumber = order.PhoneNumber,
                 Email = order.Email,
                 ShippingAddress = order.ShippingAddress,
-                City = order.City,
-                Ward = order.Ward,
+                City = order.CityNavigation?.CityName,
+                Ward = order.WardNavigation?.WardName,
                 Notes = order.Notes,
                 PaymentMethod = order.PaymentMethod,
                 PaymentStatus = order.PaymentStatus,
