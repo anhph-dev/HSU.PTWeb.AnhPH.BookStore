@@ -7,6 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="del\**" />
+    <Compile Remove="QC\**" />
+    <Content Remove="del\**" />
+    <Content Remove="QC\**" />
+    <EmbeddedResource Remove="del\**" />
+    <EmbeddedResource Remove="QC\**" />
+    <None Remove="del\**" />
+    <None Remove="QC\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Models\Supplier.cs" />
   </ItemGroup>
 

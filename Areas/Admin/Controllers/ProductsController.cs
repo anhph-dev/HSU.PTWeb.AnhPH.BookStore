@@ -68,7 +68,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Areas.Admin.Controllers
         // POST: Admin/Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Product model, IFormFile imageFile)
+        public async Task<IActionResult> Create(Product model, IFormFile? imageFile)
         {
             ModelState.Remove("ImageUrl");
             ModelState.Remove("Image");
@@ -145,7 +145,7 @@ namespace HSU.PTWeb.AnhPH.BookStore.Areas.Admin.Controllers
         // POST: Admin/Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Product model, IFormFile imageFile)
+        public async Task<IActionResult> Edit(int id, Product model, IFormFile? imageFile)
         {
             if (id != model.ProductId)
             {
