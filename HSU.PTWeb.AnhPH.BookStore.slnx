@@ -1,5 +1,3 @@
 <Solution>
-  <Project Path="../../../QC/Final/HSU.QC.AnhPH/BookStore.Playwright/BookStore.Playwright.csproj" />
-  <Project Path="../../../QC/Final/HSU.QC.AnhPH/BookStore.Tests/BookStore.Tests.csproj" />
   <Project Path="HSU.PTWeb.AnhPH.BookStore.csproj" />
 </Solution>
